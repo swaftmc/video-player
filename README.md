@@ -1,11 +1,16 @@
 # Video viewer
 
-One HTML file. Open it in Edge or Chrome from anywhere (a double-click works; no server).
+One HTML file. Download it from [the latest release](https://github.com/swaftmc/video-player/releases/latest) and
+open it in Edge or Chrome from anywhere (a double-click works; no server).
 
-- Open a folder of videos. They're listed in the sidebar on the left, sub-folders included. Click one to watch it.
+- Open a folder of videos (Folder). They're listed in the sidebar on the left, sub-folders included. Click one to
+  watch it. Opening another folder replaces it.
+- Add single video files (Files). They're listed under `misc/`, after the folder's videos, and stay when you open
+  another folder.
 - Speed keys: 1 → 0.25x, 2 → 0.5x, 3 → 1x, 4 → 2x, 5 → 3x by default. Change a key or its speed under the sliders
   button, or add more. The browser remembers them. The ? button (or the ? key) lists every key.
-- Fullscreen (the button, F, or a double-click on the video) shows the video alone; every key still works.
+- Fullscreen (the Fullscreen button or F) shows the video alone, and every key still works. The player's own
+  fullscreen button and double-click work too, but there the speed and zoom messages don't show.
 - Motion zoom (the switch, or Z): the picture zooms onto where things move. A small optical-flow model
   ([NeuFlowV2](https://github.com/neufieldrobotics/NeuFlow_v2)) compares two frames 0.1 s apart, the camera's own pan is
   taken out, and the view eases to a box round what is left.
@@ -19,7 +24,7 @@ One HTML file. Open it in Edge or Chrome from anywhere (a double-click works; no
 | Z | motion zoom on / off |
 | wheel | zoom in / out (motion zoom on: tighter / looser) |
 | 0 | reset the zoom (and turn motion zoom off) |
-| F | fullscreen on / off (or double-click the video) |
+| F | fullscreen on / off (also leaves the player's own fullscreen) |
 | Space | play / pause |
 | ? | the keys list |
 
@@ -58,7 +63,7 @@ Layout:
 - `src/zoom.js`: zoom by cropping the video (`object-view-box`), the wheel, easing to the motion
 - `src/flow.js`: onnxruntime-web, the model file (kept in IndexedDB), grabbing frame pairs, running the model
 - `src/keys.js`: the speed keys, their table in the Speed keys dialog and the keyboard
-- `src/library.js`: the folder and the video list
+- `src/library.js`: the folder, the misc/ files and the video list
 
 ## Known limits
 
@@ -68,7 +73,14 @@ Layout:
 - The model takes a fixed 768x432 picture; portrait videos are squeezed into it.
 - Browsers can't reopen a folder by themselves: pick it again after a reload.
 - The model file can't be chosen in fullscreen (a file chooser would end it): the first time, turn motion zoom on outside it.
+- In the player's own fullscreen (its button or double-click), the speed and zoom messages don't show. Edge won't let
+  the page swap it for its own fullscreen without a fresh click.
+- After pressing Tab into the player's controls, the keys go to those controls until you click the video.
 
-## Licences
+## Licence
 
-NeuFlowV2 model: Apache-2.0. onnxruntime-web: MIT.
+[PolyForm Noncommercial 1.0.0](LICENSE): free to use, change and share for non-commercial purposes. For commercial
+use, ask first: open an issue at [swaftmc/video-player](https://github.com/swaftmc/video-player/issues).
+
+Not included here, and under their own licences: the NeuFlowV2 model (Apache-2.0) and onnxruntime-web (MIT), which
+the page loads when motion zoom is used.

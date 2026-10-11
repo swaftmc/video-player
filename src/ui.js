@@ -14,14 +14,22 @@ function say(text, ms = 1200) {
   sayTimer = setTimeout(() => { m.hidden = true; }, ms);
 }
 
-// The video area alone goes fullscreen (not the <video>), so the messages still show and the page still gets the keys;
-// the video's own fullscreen button is hidden (controlslist) for the same reason.
+// F and the Fullscreen button: the video area, so the messages over the video still show. The player's own button
+// (and double-click) is the browser's fullscreen of the <video> alone: the keys work there, the messages can't show.
+// (Edge refuses to swap that for the video area, as it needs a fresh click.)
 function toggleFullscreen() {
   if (document.fullscreenElement) document.exitFullscreen();
   else $("stage").requestFullscreen().catch(e => say(`fullscreen refused: ${e.message}`, 3000));
 }
 
+// A click in the player's controls (seek bar, volume, its fullscreen button) leaves the focus inside them, where key
+// presses never reach the page: hand it back to the video itself once the click, or the seek it made, is over.
+// The seek bar's clicks don't reach the page at all, so its seeks are the cue for it.
+const refocus = () => setTimeout(() => v.focus());
+document.addEventListener("pointerup", e => { if (e.target === v) refocus(); }, true);
+v.addEventListener("seeked", () => { if (document.activeElement === v) refocus(); });
+document.addEventListener("fullscreenchange", () => { if (document.fullscreenElement === v) refocus(); });
+
 $("bFull").onclick = toggleFullscreen;
-v.addEventListener("dblclick", toggleFullscreen);
 $("bSettings").onclick = () => $("settings").showModal();
 $("bHelp").onclick = () => $("help").showModal();
