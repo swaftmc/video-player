@@ -1,0 +1,39 @@
+:root { color-scheme: dark; font: 14px/1.4 system-ui, sans-serif; }
+[hidden] { display: none !important; }
+body { margin: 0; height: 100vh; display: grid; grid-template-columns: 300px 1fr; background: #111; color: #ddd; }
+aside { overflow: auto; padding: 12px; border-right: 1px solid #333; }
+main { position: relative; min-width: 0; min-height: 0; background: #000; }
+video { display: block; width: 100%; height: 100%; object-fit: contain; outline: none; }
+h2 { margin: 20px 0 6px; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: #999; }
+p { margin: 6px 0; }
+.hint { color: #999; font-size: 12px; }
+kbd { padding: 0 4px; border: 1px solid #555; border-radius: 3px; font: 12px ui-monospace, monospace; }
+
+button, .button { display: inline-block; padding: 4px 10px; border: 1px solid #555; border-radius: 4px;
+                  background: #2a2a2a; color: inherit; font: inherit; cursor: pointer; }
+button:hover, .button:hover { background: #333; }
+.button:focus-within, button:focus-visible { outline: 2px solid #6af; outline-offset: 1px; }
+.vh { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }   /* hidden but focusable */
+
+#list { margin: 6px 0 0; padding: 0; list-style: none; }
+#list button { display: block; width: 100%; padding: 4px 6px; border: 0; background: none; text-align: left;
+               overflow-wrap: anywhere; }
+#list button:hover { background: #222; }
+#list button.on { background: #2d4a7a; }
+
+.switch { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+.switch input { appearance: none; flex: none; width: 34px; height: 18px; margin: 0; border-radius: 9px; cursor: pointer;
+                background: radial-gradient(circle at 9px 50%, #ddd 6px, transparent 7px) #444; }
+.switch input:checked { background: radial-gradient(circle at 25px 50%, #fff 6px, transparent 7px) #3b7be0; }
+.switch input:focus-visible { outline: 2px solid #6af; outline-offset: 1px; }
+#motionState { min-height: 1.4em; color: #9bd; font-size: 12px; }
+
+#keys { border-collapse: collapse; }
+#keys td { padding: 2px 4px 2px 0; }
+#keys .key { min-width: 44px; }
+#keys tr.on .key { background: #3b7be0; border-color: #3b7be0; }
+#keys input { width: 64px; margin-right: 2px; }
+#keys .x { padding: 2px 6px; border-color: transparent; background: none; color: #999; }
+
+#msg { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); padding: 6px 12px; border-radius: 6px;
+       background: #000c; pointer-events: none; }

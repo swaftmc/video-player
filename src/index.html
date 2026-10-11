@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video viewer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<aside>
+  <label class="button">Open folder…<input type="file" id="pick" class="vh" webkitdirectory multiple></label>
+  <p id="count">No folder open.</p>
+  <ul id="list"></ul>
+
+  <h2>Motion zoom</h2>
+  <label class="switch"><input type="checkbox" id="motion" role="switch"> Zoom onto the motion <kbd>Z</kbd></label>
+  <p id="motionState" aria-live="polite"></p>
+  <label class="button" id="modelLabel" hidden>Choose model file…<input type="file" id="modelPick" class="vh" accept=".onnx"></label>
+  <p class="hint">The wheel over the video zooms; with motion zoom on it frames tighter or looser. <kbd>0</kbd> resets.
+    <kbd>Space</kbd> plays and pauses.</p>
+
+  <h2>Speed keys</h2>
+  <table id="keys"></table>
+  <p><button id="addKey">Add a key</button> <button id="resetKeys">Defaults</button></p>
+</aside>
+<main>
+  <video id="v" controls tabindex="0"></video>
+  <div id="msg" aria-live="polite" hidden></div>
+</main>
+<script src="ui.js"></script>
+<script src="motion.js"></script>
+<script src="zoom.js"></script>
+<script src="flow.js"></script>
+<script src="keys.js"></script>
+<script src="library.js"></script>
+</body>
+</html>
