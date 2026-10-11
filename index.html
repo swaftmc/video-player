@@ -5,19 +5,35 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Video viewer</title>
 <style>
-:root { color-scheme: dark; --bg: #101114; --panel: #17181c; --line: #2a2c33; --text: #e4e5e9; --dim: #8b8e98;
-        --btn: #23252b; --btn-hover: #2d3038; --accent: #3b82f6; --accent-hover: #4b8ff7; --focus: #7aa7ff;
+/* Theme: Auto follows the system (color-scheme: light dark); Settings can pin it with data-theme on <html>. Every
+   colour is light-dark(light, dark), so one set of rules serves both, the player's own controls included. */
+:root { color-scheme: light dark;
+        --bg: light-dark(#f3f4f6, #101114); --panel: light-dark(#ffffff, #17181c); --line: light-dark(#d8dbe0, #2a2c33);
+        --text: light-dark(#1d1f24, #e4e5e9); --dim: light-dark(#5c616c, #8b8e98);
+        --btn: light-dark(#eef0f3, #23252b); --btn-hover: light-dark(#e1e4e9, #2d3038);
+        --accent: light-dark(#2563eb, #3b82f6); --accent-hover: light-dark(#1d4ed8, #4b8ff7); --focus: light-dark(#2563eb, #7aa7ff);
+        --knob: light-dark(#ffffff, #c9cbd1); --track: light-dark(#b9bdc6, #3a3d45);
         font: 14px/1.4 system-ui, sans-serif; }
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
 [hidden] { display: none !important; }
-body { margin: 0; height: 100vh; overflow: hidden; display: grid; grid-template-columns: 260px 1fr;
+body { margin: 0; height: 100vh; overflow: hidden; display: grid; grid-template-columns: var(--side, 260px) 1fr;
        background: var(--bg); color: var(--text); }
+body.resizing { cursor: ew-resize; user-select: none; }
 svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2;
       stroke-linecap: round; stroke-linejoin: round; }
 kbd { padding: 0 5px; border: 1px solid var(--line); border-radius: 4px; color: var(--dim);
       font: 11px/16px ui-monospace, monospace; }
 
 /* sidebar: the buttons on top, the list taking the rest of the height, the switch and fullscreen at the bottom */
-aside { display: flex; flex-direction: column; min-height: 0; background: var(--panel); border-right: 1px solid var(--line); }
+aside { position: relative; display: flex; flex-direction: column; min-height: 0; container-type: inline-size;
+        background: var(--panel); border-right: 1px solid var(--line); }
+@container (width < 250px) { #bFull kbd { display: none; } }   /* the narrowest sidebar: the key is in the tooltip */
+/* the edge to drag (VS Code's sash): lights up after a short hover, or while dragging or focused */
+#sash { position: absolute; top: 0; right: -3px; bottom: 0; z-index: 2; width: 6px; cursor: ew-resize; outline: none;
+        transition: background-color .1s; }
+#sash:hover { background: var(--accent); transition-delay: .3s; }
+#sash:focus-visible, body.resizing #sash { background: var(--accent); transition-delay: 0s; }
 .bar { display: flex; gap: 6px; padding: 12px; }
 .foot .bar { padding: 0; }
 .bar .primary, .bar .grow { flex: 1; }
@@ -52,7 +68,7 @@ aside { display: flex; flex-direction: column; min-height: 0; background: var(--
 .switch { display: flex; gap: 10px; align-items: center; cursor: pointer; user-select: none; }
 .switch kbd { margin-left: auto; }
 .switch input { appearance: none; flex: none; width: 36px; height: 20px; margin: 0; border-radius: 10px; cursor: pointer;
-                background: radial-gradient(circle at 10px 50%, #c9cbd1 6px, transparent 7px) #3a3d45;
+                background: radial-gradient(circle at 10px 50%, var(--knob) 6px, transparent 7px) var(--track);
                 transition: background-color .15s; }
 .switch input:checked { background: radial-gradient(circle at 26px 50%, #fff 6px, transparent 7px) var(--accent); }
 
@@ -68,6 +84,20 @@ dialog { width: min(420px, calc(100vw - 48px)); padding: 16px 18px 18px; border:
 dialog::backdrop { background: #0009; }
 dialog .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 dialog h2 { margin: 0; font-size: 16px; }
+dialog h3, .theme legend { margin: 16px 0 6px; padding: 0; color: var(--dim); font-size: 12px; font-weight: 600;
+                           letter-spacing: .04em; text-transform: uppercase; }
+.theme { margin: 0; padding: 0; border: 0; }
+.theme legend { margin-top: 4px; }
+/* Auto / Light / Dark: radio buttons drawn as one segmented control */
+.seg { display: flex; }
+.seg label { flex: 1; display: flex; align-items: center; justify-content: center; height: 32px; border: 1px solid var(--line);
+             background: var(--btn); cursor: pointer; user-select: none; }
+.seg label + label { border-left: 0; }
+.seg label:first-of-type { border-radius: 8px 0 0 8px; }
+.seg label:last-of-type { border-radius: 0 8px 8px 0; }
+.seg label:hover { background: var(--btn-hover); }
+.seg label:has(input:checked) { border-color: var(--accent); background: var(--accent); color: #fff; }
+.seg label:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; position: relative; }
 .hint { margin: 8px 0; color: var(--dim); font-size: 12px; }
 .row { display: flex; gap: 8px; margin: 12px 0 0; }
 #keys { border-collapse: collapse; }
@@ -109,7 +139,7 @@ dialog h2 { margin: 0; font-size: 16px; }
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
         Fullscreen <kbd>F</kbd>
       </button>
-      <button class="btn icon" id="bSettings" title="Speed keys" aria-label="Speed keys">
+      <button class="btn icon" id="bSettings" title="Settings: theme and speed keys" aria-label="Settings">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
       </button>
       <button class="btn icon" id="bHelp" title="Keys and help (?)" aria-label="Help">
@@ -117,6 +147,8 @@ dialog h2 { margin: 0; font-size: 16px; }
       </button>
     </div>
   </div>
+  <div id="sash" role="separator" aria-orientation="vertical" aria-label="Sidebar width" aria-valuemin="240"
+       aria-valuemax="480" aria-valuenow="260" tabindex="0" title="Drag to resize the sidebar; double-click to reset"></div>
 </aside>
 <main id="stage">
   <video id="v" controls tabindex="0"></video>
@@ -124,8 +156,14 @@ dialog h2 { margin: 0; font-size: 16px; }
 </main>
 
 <dialog id="settings" aria-labelledby="settingsTitle">
-  <form method="dialog" class="head"><h2 id="settingsTitle">Speed keys</h2><button class="btn icon" aria-label="Close">
+  <form method="dialog" class="head"><h2 id="settingsTitle">Settings</h2><button class="btn icon" aria-label="Close">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></form>
+  <fieldset class="theme"><legend>Theme</legend><div class="seg">
+    <label><input type="radio" name="theme" value="auto" class="vh"> Auto</label>
+    <label><input type="radio" name="theme" value="light" class="vh"> Light</label>
+    <label><input type="radio" name="theme" value="dark" class="vh"> Dark</label>
+  </div></fieldset>
+  <h3>Speed keys</h3>
   <p class="hint">Click a key to change it, or type a new speed.</p>
   <table id="keys"></table>
   <p class="row"><button class="btn" id="addKey">Add a key</button><button class="btn" id="resetKeys">Defaults</button></p>
@@ -183,6 +221,47 @@ document.addEventListener("fullscreenchange", () => { if (document.fullscreenEle
 $("bFull").onclick = toggleFullscreen;
 $("bSettings").onclick = () => $("settings").showModal();
 $("bHelp").onclick = () => $("help").showModal();
+
+// Theme: auto follows the system; light / dark pin it (style.css reads data-theme). Saved in localStorage.
+const THEMES = ["auto", "light", "dark"], THEME_SAVE = "video-viewer.theme";
+function setTheme(t) {
+  if (!THEMES.includes(t)) t = "auto";
+  if (t === "auto") delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = t;
+  for (const r of document.getElementsByName("theme")) r.checked = r.value === t;
+  localStorage.setItem(THEME_SAVE, t);
+}
+for (const r of document.getElementsByName("theme")) r.addEventListener("change", () => setTheme(r.value));
+setTheme(localStorage.getItem(THEME_SAVE));
+
+// The sidebar's width: drag its edge (the sash), or arrow keys on it; double-click puts it back. Saved too.
+const SIDE_MIN = 240, SIDE_MAX = 480, SIDE_DEFAULT = 260, SIDE_SAVE = "video-viewer.sidebar";
+const sash = $("sash");
+function setSide(px, save = true) {
+  px = Math.round(clamp(px, SIDE_MIN, SIDE_MAX));
+  document.body.style.setProperty("--side", `${px}px`);
+  sash.setAttribute("aria-valuenow", px);
+  if (save) localStorage.setItem(SIDE_SAVE, px);
+}
+sash.addEventListener("pointerdown", e => {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  sash.setPointerCapture(e.pointerId);
+  document.body.classList.add("resizing");
+});
+sash.addEventListener("pointermove", e => { if (sash.hasPointerCapture(e.pointerId)) setSide(e.clientX, false); });
+sash.addEventListener("lostpointercapture", () => {   // save where the drag left it (a plain click moves nothing)
+  document.body.classList.remove("resizing");
+  setSide(+sash.getAttribute("aria-valuenow"));
+});
+sash.addEventListener("dblclick", () => { setSide(SIDE_DEFAULT); localStorage.removeItem(SIDE_SAVE); });
+sash.addEventListener("keydown", e => {
+  const step = { ArrowLeft: -10, ArrowRight: 10 }[e.key];
+  if (!step) return;
+  e.preventDefault();
+  setSide(+sash.getAttribute("aria-valuenow") + (e.shiftKey ? 5 * step : step));
+});
+setSide(+localStorage.getItem(SIDE_SAVE) || SIDE_DEFAULT, false);
 </script>
 <script>
 // Where the frame moves: the box around the main motion in an optical-flow field, and the view that frames it.
@@ -437,7 +516,7 @@ $("motion").addEventListener("change", e => setMotion(e.target.checked));
 $("modelPick").addEventListener("change", () => { if ($("modelPick").files[0]) setMotion(true); });
 </script>
 <script>
-// Speed keys: [key, speed] pairs, edited in the Speed keys dialog and saved in localStorage; the other keys are fixed.
+// Speed keys: [key, speed] pairs, edited in the Settings dialog and saved in localStorage; the other keys are fixed.
 "use strict";
 
 const DEFAULT_KEYS = [["1", 0.25], ["2", 0.5], ["3", 1], ["4", 2], ["5", 3]];

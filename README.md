@@ -15,6 +15,9 @@ open it in Edge or Chrome from anywhere (a double-click works; no server).
   ([NeuFlowV2](https://github.com/neufieldrobotics/NeuFlow_v2)) compares two frames 0.1 s apart, the camera's own pan is
   taken out, and the view eases to a box round what is left.
 - The mouse wheel over the video zooms at the cursor. With motion zoom on it frames the motion tighter or looser.
+- Light and dark themes: Settings (the sliders button) has Auto (follows Windows / the browser), Light and Dark.
+- The sidebar's edge drags to make it wider or narrower (240–480 px), like VS Code's panels. Double-click the edge to
+  reset it; with the edge focused (Tab), the arrow keys move it too. The theme and the width are remembered.
 
 ## Use
 
@@ -58,11 +61,12 @@ node build.mjs          # src/ -> index.html
 `src/index.html` also runs as it is, for working on it.
 
 Layout:
-- `src/ui.js`: the shared bits (element lookup, the message over the video, fullscreen, the two dialogs)
+- `src/ui.js`: the shared bits (element lookup, the message over the video, fullscreen, the two dialogs, the theme,
+  the sidebar's width)
 - `src/motion.js`: flow field → box round the main motion, and the zoomed view that frames it
 - `src/zoom.js`: zoom by cropping the video (`object-view-box`), the wheel, easing to the motion
 - `src/flow.js`: onnxruntime-web, the model file (kept in IndexedDB), grabbing frame pairs, running the model
-- `src/keys.js`: the speed keys, their table in the Speed keys dialog and the keyboard
+- `src/keys.js`: the speed keys, their table in the Settings dialog and the keyboard
 - `src/library.js`: the folder, the misc/ files and the video list
 
 ## Known limits

@@ -1,4 +1,4 @@
-// Speed keys: [key, speed] pairs, edited in the Speed keys dialog and saved in localStorage; the other keys are fixed.
+// Speed keys: [key, speed] pairs, edited in the Settings dialog and saved in localStorage; the other keys are fixed.
 "use strict";
 
 const DEFAULT_KEYS = [["1", 0.25], ["2", 0.5], ["3", 1], ["4", 2], ["5", 3]];

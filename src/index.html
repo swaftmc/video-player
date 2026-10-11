@@ -31,7 +31,7 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
         Fullscreen <kbd>F</kbd>
       </button>
-      <button class="btn icon" id="bSettings" title="Speed keys" aria-label="Speed keys">
+      <button class="btn icon" id="bSettings" title="Settings: theme and speed keys" aria-label="Settings">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
       </button>
       <button class="btn icon" id="bHelp" title="Keys and help (?)" aria-label="Help">
@@ -39,6 +39,8 @@
       </button>
     </div>
   </div>
+  <div id="sash" role="separator" aria-orientation="vertical" aria-label="Sidebar width" aria-valuemin="240"
+       aria-valuemax="480" aria-valuenow="260" tabindex="0" title="Drag to resize the sidebar; double-click to reset"></div>
 </aside>
 <main id="stage">
   <video id="v" controls tabindex="0"></video>
@@ -46,8 +48,14 @@
 </main>
 
 <dialog id="settings" aria-labelledby="settingsTitle">
-  <form method="dialog" class="head"><h2 id="settingsTitle">Speed keys</h2><button class="btn icon" aria-label="Close">
+  <form method="dialog" class="head"><h2 id="settingsTitle">Settings</h2><button class="btn icon" aria-label="Close">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></form>
+  <fieldset class="theme"><legend>Theme</legend><div class="seg">
+    <label><input type="radio" name="theme" value="auto" class="vh"> Auto</label>
+    <label><input type="radio" name="theme" value="light" class="vh"> Light</label>
+    <label><input type="radio" name="theme" value="dark" class="vh"> Dark</label>
+  </div></fieldset>
+  <h3>Speed keys</h3>
   <p class="hint">Click a key to change it, or type a new speed.</p>
   <table id="keys"></table>
   <p class="row"><button class="btn" id="addKey">Add a key</button><button class="btn" id="resetKeys">Defaults</button></p>
