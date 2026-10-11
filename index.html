@@ -100,10 +100,16 @@ dialog h3, .theme legend { margin: 16px 0 6px; padding: 0; color: var(--dim); fo
 .seg label:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; position: relative; }
 .hint { margin: 8px 0; color: var(--dim); font-size: 12px; }
 .row { display: flex; gap: 8px; margin: 12px 0 0; }
+dialog#settings { width: min(500px, calc(100vw - 48px)); }
 #keys { border-collapse: collapse; }
-#keys td { padding: 3px 6px 3px 0; color: var(--dim); }
-#keys .key { min-width: 64px; color: var(--text); }
-#keys tr.on .key { border-color: var(--accent); background: var(--accent); color: #fff; }
+#keys td { padding: 3px 6px 3px 0; color: var(--dim); white-space: nowrap; }
+#keys .key { min-width: 92px; color: var(--text); }
+#keys .key.wait { border-color: var(--accent); color: var(--accent); }
+#keys select { height: 34px; padding: 0 6px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg);
+               color: var(--text); font: inherit; }
+#keys select:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.note { min-height: 1.4em; margin: 6px 0 0; color: var(--text); font-size: 12px; }
+#keys tr.on .key:not(.wait) { border-color: var(--accent); background: var(--accent); color: #fff; }
 #keys input { width: 72px; height: 34px; box-sizing: border-box; margin-right: 4px; padding: 0 8px; border: 1px solid var(--line);
               border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
 #keys input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
@@ -111,7 +117,7 @@ dialog h3, .theme legend { margin: 16px 0 6px; padding: 0; color: var(--dim); fo
 #keys .x:hover { background: var(--btn); color: var(--text); }
 .keylist { border-collapse: collapse; width: 100%; }
 .keylist td { padding: 5px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
-.keylist td:first-child { width: 72px; color: var(--dim); }
+.keylist td:first-child { width: 88px; padding-right: 8px; color: var(--dim); }
 </style>
 </head>
 <body>
@@ -129,20 +135,20 @@ dialog h3, .theme legend { margin: 16px 0 6px; padding: 0; color: var(--dim); fo
   <h1 id="folder" hidden></h1>
   <ul id="list"><li class="empty">Open a folder or files to start.</li></ul>
   <div class="foot">
-    <label class="switch" id="motionLabel" title="Zoom onto the motion (Z)">
-      <input type="checkbox" id="motion" role="switch"> Motion zoom <kbd>Z</kbd>
+    <label class="switch" id="motionLabel" title="Zoom onto the motion">
+      <input type="checkbox" id="motion" role="switch"> Motion zoom <kbd id="motionKey"></kbd>
     </label>
     <p id="motionState" aria-live="polite" hidden></p>
     <label class="btn" id="modelLabel" hidden>Choose model file…<input type="file" id="modelPick" class="vh" accept=".onnx"></label>
     <div class="bar">
-      <button class="btn grow" id="bFull" title="Fullscreen (F)">
+      <button class="btn grow" id="bFull" title="Fullscreen">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
-        Fullscreen <kbd>F</kbd>
+        Fullscreen <kbd id="fullKey"></kbd>
       </button>
-      <button class="btn icon" id="bSettings" title="Settings: theme and speed keys" aria-label="Settings">
+      <button class="btn icon" id="bSettings" title="Settings: theme and keys" aria-label="Settings">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
       </button>
-      <button class="btn icon" id="bHelp" title="Keys and help (?)" aria-label="Help">
+      <button class="btn icon" id="bHelp" title="Keys and help" aria-label="Help">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.7M12 17h.01"/></svg>
       </button>
     </div>
@@ -163,9 +169,12 @@ dialog h3, .theme legend { margin: 16px 0 6px; padding: 0; color: var(--dim); fo
     <label><input type="radio" name="theme" value="light" class="vh"> Light</label>
     <label><input type="radio" name="theme" value="dark" class="vh"> Dark</label>
   </div></fieldset>
-  <h3>Speed keys</h3>
-  <p class="hint">Click a key to change it, or type a new speed.</p>
+  <h3>Keys</h3>
+  <p class="hint">Click a key to change it, then press the new one (Ctrl, Alt and Shift combinations work). A key
+    already in use moves to the new row. Frame step and Skip go back with a minus number. Esc and Tab can't be used,
+    and the browser keeps a few combinations for itself (such as Ctrl+W and Ctrl+T).</p>
   <table id="keys"></table>
+  <p id="keysNote" class="note" aria-live="polite"></p>
   <p class="row"><button class="btn" id="addKey">Add a key</button><button class="btn" id="resetKeys">Defaults</button></p>
 </dialog>
 
@@ -173,17 +182,11 @@ dialog h3, .theme legend { margin: 16px 0 6px; padding: 0; color: var(--dim); fo
   <form method="dialog" class="head"><h2 id="helpTitle">Keys</h2><button class="btn icon" aria-label="Close">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></form>
   <table class="keylist">
-    <tr><td>Speed</td><td id="helpSpeeds"></td></tr>
-    <tr><td><kbd>Z</kbd></td><td>motion zoom on / off</td></tr>
-    <tr><td>wheel</td><td>zoom at the cursor (motion zoom on: tighter / looser)</td></tr>
-    <tr><td><kbd>0</kbd></td><td>reset the zoom</td></tr>
-    <tr><td><kbd>F</kbd></td><td>fullscreen. The player's own button and double-click work too, but there the speed and zoom messages don't show.</td></tr>
-    <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>one frame back / forward (pauses)</td></tr>
-    <tr><td><kbd>A</kbd> <kbd>D</kbd></td><td>5 seconds back / forward</td></tr>
-    <tr><td><kbd>Space</kbd></td><td>play / pause</td></tr>
-    <tr><td><kbd>?</kbd></td><td>this list</td></tr>
+    <tbody id="helpKeys"></tbody>
+    <tbody><tr><td>wheel</td><td>zoom at the cursor (motion zoom on: tighter / looser)</td></tr></tbody>
   </table>
-  <p class="hint">Motion zoom needs Edge or Chrome. The first time, it asks for the model file
+  <p class="hint">Change the keys in Settings (the sliders button). A frame step pauses the video.
+    Motion zoom needs Edge or Chrome. The first time, it asks for the model file
     <code>neuflow_mixed.onnx</code> and downloads onnxruntime-web (about 25 MB) once; the browser keeps both.</p>
 </dialog>
 
@@ -426,7 +429,8 @@ async function openModel() {
   if (!navigator.gpu) throw fail("motion zoom needs WebGPU (Edge or Chrome)");
   const kept = await store("readonly", s => s.get("model")), file = kept || $("modelPick").files[0];
   if (!file) {   // a file chooser would end fullscreen, so there only say what's needed
-    if (document.fullscreenElement) throw fail("motion zoom needs its model file once: leave fullscreen (F), then press Z", true);
+    const key = a => (keyOf(a) ? ` (${label(keyOf(a))})` : "");   // the keys as set in Settings
+    if (document.fullscreenElement) throw fail(`motion zoom needs its model file once: leave fullscreen${key("fullscreen")}, then turn motion zoom on${key("motion")}`, true);
     $("modelPick").click();
     throw fail("choose the model file, neuflow_mixed.onnx (asked once)", true);
   }
@@ -504,7 +508,8 @@ async function look(a, b) {
     const out = await session.run({ [session.inputNames[0]]: a, [session.inputNames[1]]: b });
     if (motionOn) {
       follow(motionBox(out[session.outputNames[0]].data, FW, FH));
-      $("motionLabel").title = `Zoom onto the motion (Z): ${((performance.now() - t0) / 1000).toFixed(1)} s per look`;
+      const k = keyOf("motion");
+      $("motionLabel").title = `Zoom onto the motion${k ? ` (${label(k)})` : ""}: ${((performance.now() - t0) / 1000).toFixed(1)} s per look`;
     }
   } catch (e) {
     await setMotion(false);
@@ -536,12 +541,11 @@ function stepFrom(base, dir, d, duration) {
 }
 </script>
 <script>
-// Arrow keys: one frame back / forward. A and D: 5 seconds back / forward. The frame length is measured while the video
-// plays (frames.js); a step seeks to the middle of the wanted frame, so rounding can't skip or repeat one.
+// Frame steps (n frames, back when n < 0) and skips (s seconds). The frame length is measured while the video plays
+// (frames.js); a step seeks to the middle of the wanted frame, so rounding can't skip or repeat one.
 "use strict";
 
 const GAPS_NEEDED = 5;    // frame gaps seen while playing before the frame length is trusted
-const SKIP = 5;           // seconds for A and D
 let frameLen = 0, gaps = 0, lastT = -1, shownT = -1, pending = null, pendingTimer = 0, measuring = false;
 // shownT: the time of the frame on screen. pending: the frame a step is heading for, so steps pressed before it
 // arrives (a held key) go on from there instead of from the old frame.
@@ -579,12 +583,12 @@ async function measure() {   // a step before any playback: play a few frames mu
   return ok;
 }
 
-async function step(dir) {
+async function step(n) {
   if (!v.videoWidth || shownT < 0 || measuring) return;
   const base = pending ?? shownT;            // before measure(), which plays on
   v.pause();
   if (gaps < GAPS_NEEDED && !(await measure())) return say("can't tell this video's frame rate", 2500);
-  const next = stepFrom(base, dir, frameLen, v.duration);
+  const next = stepFrom(base, n, frameLen, v.duration);
   if (Math.abs(next - base) < frameLen / 2) return;       // already on the first / last frame
   pending = next;
   clearTimeout(pendingTimer);
@@ -593,115 +597,280 @@ async function step(dir) {
   say(`${next.toFixed(2)} s`, 700);
 }
 
-function skip(dir) {
+function skip(s) {
   if (!v.videoWidth) return;
   pending = null;
-  v.currentTime = clamp(v.currentTime + dir * SKIP, 0, v.duration);
-  say(`${dir > 0 ? "+" : "−"}${SKIP} s`, 700);
+  v.currentTime = clamp(v.currentTime + s, 0, v.duration);
+  say(`${s > 0 ? "+" : "−"}${Math.abs(s)} s`, 700);
 }
 </script>
 <script>
-// Speed keys: [key, speed] pairs, edited in the Settings dialog and saved in localStorage; the other keys are fixed.
+// The keys: what each action is, the default keys, key names, and checking the saved list (pure: check_keys.mjs runs
+// it in Node). A binding is [key, action] or [key, action, value]; a key is a name such as "z", "shift+arrowright",
+// "ctrl+2" or " " (Space), from combo().
 "use strict";
 
-const DEFAULT_KEYS = [["1", 0.25], ["2", 0.5], ["3", 1], ["4", 2], ["5", 3]];
-const FIXED = { z: "motion zoom", 0: "reset zoom", f: "fullscreen", "?": "the keys list", " ": "play / pause",
-                a: "5 seconds back", d: "5 seconds forward" };
-const MIN_RATE = 0.0625, MAX_RATE = 16;   // the playbackRate range Chromium accepts
-const KEYS_SAVE = "video-viewer.keys";
-let keys = loadKeys(), capturing = -1;
+// value: the unit shown after the number, its range, whether it must be a whole number, a new key's value
+const ACTIONS = {
+  rate: { label: "Speed", unit: "x", min: 0.0625, max: 16, def: 1.5, inc: 0.05 },   // Chromium's playbackRate range
+  play: { label: "Play / pause" },
+  step: { label: "Frame step", unit: "frames", min: -1000, max: 1000, def: 1, inc: 1, whole: true },
+  skip: { label: "Skip", unit: "s", min: -3600, max: 3600, def: 10, inc: 1 },
+  motion: { label: "Motion zoom on / off" },
+  zoomreset: { label: "Reset zoom" },
+  fullscreen: { label: "Fullscreen" },
+  help: { label: "Keys list" },
+};
+const DEFAULT_BINDINGS = [
+  ["1", "rate", 0.25], ["2", "rate", 0.5], ["3", "rate", 1], ["4", "rate", 2], ["5", "rate", 3],
+  [" ", "play"], ["arrowleft", "step", -1], ["arrowright", "step", 1], ["a", "skip", -5], ["d", "skip", 5],
+  ["z", "motion"], ["0", "zoomreset"], ["f", "fullscreen"], ["?", "help"],
+];
+const MODIFIER_KEYS = ["control", "shift", "alt", "altgraph", "meta", "os", "capslock", "numlock", "fn"];
+const defaultBindings = () => DEFAULT_BINDINGS.map(b => [...b]);
 
-function loadKeys() {     // the saved pairs that make sense (a key that became fixed in a later version is dropped), or the defaults
-  try {
-    const k = JSON.parse(localStorage.getItem(KEYS_SAVE));
-    if (Array.isArray(k)) {
-      const ok = k.filter(p => Array.isArray(p) && typeof p[0] === "string" && p[0].length === 1 &&
-        !(p[0] in FIXED) && Number.isFinite(p[1]) && p[1] >= MIN_RATE && p[1] <= MAX_RATE);
-      if (ok.length || !k.length) return ok;     // an empty saved list is the user's own choice: no speed keys
+// The name of the key pressed (e: a keydown event), "" for a modifier alone. Shift is part of the name for letters
+// and named keys (Shift+A, Shift+→); for symbols it's already in the character ("?" is Shift+/).
+function combo(e) {
+  const k = e.key.toLowerCase();
+  if (MODIFIER_KEYS.includes(k)) return "";
+  const shift = e.shiftKey && (/^[a-z]$/.test(k) || k.length > 1 || k === " ");
+  return (e.ctrlKey ? "ctrl+" : "") + (e.altKey ? "alt+" : "") + (shift ? "shift+" : "") + (e.metaKey ? "meta+" : "") + k;
+}
+
+const baseKey = k => k.replace(/^((?:ctrl|alt|shift|meta)\+)*/, "") || k;   // "ctrl++" -> "+"
+// Esc cancels, closes dialogs and leaves fullscreen; Tab moves the focus: neither can do anything else
+function usable(k) {
+  return typeof k === "string" && k !== "" && !["escape", "tab", "unidentified", "dead", "process"].includes(baseKey(k));
+}
+
+function label(k) {           // "shift+arrowright" -> "Shift+→", " " -> "Space"
+  if (!k) return "(none)";
+  const named = { " ": "Space", arrowleft: "←", arrowright: "→", arrowup: "↑", arrowdown: "↓", escape: "Esc", meta: "Win" };
+  const key = baseKey(k), mods = k.slice(0, k.length - key.length).split("+").filter(Boolean);
+  const cap = s => named[s] ?? (s.length === 1 ? s.toUpperCase() : s[0].toUpperCase() + s.slice(1));
+  return mods.map(m => `${cap(m)}+`).join("") + cap(key);
+}
+
+function validValue(action, x) {
+  const a = ACTIONS[action];
+  return Number.isFinite(x) && x >= a.min && x <= a.max && (!a.whole || Number.isInteger(x)) &&
+    (action === "rate" || x !== 0);   // a step or skip of 0 does nothing
+}
+
+function validBinding(b) {
+  if (!Array.isArray(b) || !usable(b[0]) || !(b[1] in ACTIONS)) return false;
+  return ACTIONS[b[1]].unit ? b.length === 3 && validValue(b[1], b[2]) : b.length === 2;
+}
+
+// The saved list, cleaned: bad entries dropped, and a key used twice keeps its first action. A saved list with
+// nothing usable left gives the defaults; a saved empty list stays empty (every key removed on purpose).
+function cleanBindings(saved) {
+  const seen = new Set(), out = [];
+  for (const b of saved) if (validBinding(b) && !seen.has(b[0])) { seen.add(b[0]); out.push([...b]); }
+  return out.length || !saved.length ? out : defaultBindings();
+}
+
+// Speed keys saved by 1.0 to 1.1 ([key, speed] pairs), as the full list: those, then the other default keys. Those
+// versions only allowed one character that wasn't one of the other default keys, so nothing else can be in the way.
+function fromOldSpeedKeys(old) {
+  const others = DEFAULT_BINDINGS.filter(b => b[1] !== "rate"), fixed = new Set(others.map(b => b[0]));
+  const seen = new Set(), rates = [];
+  for (const p of old) {
+    const b = Array.isArray(p) ? [p[0], "rate", p[1]] : null;
+    if (b && typeof b[0] === "string" && b[0].length === 1 && !fixed.has(b[0]) && validBinding(b) && !seen.has(b[0])) {
+      seen.add(b[0]);
+      rates.push(b);
     }
+  }
+  if (old.length && !rates.length) return defaultBindings();   // nothing usable: the defaults
+  return [...rates, ...others.map(b => [...b])];
+}
+
+// Key k for binding i. A key does one thing, so it leaves any other binding it had; those are returned.
+function assign(list, i, k) {
+  const moved = list.filter((b, j) => j !== i && b[0] === k);
+  list[i][0] = k;
+  for (let j = list.length - 1; j >= 0; j--) if (j !== i && list[j][0] === k) list.splice(j, 1);
+  return moved;
+}
+
+function describe([, action, x]) {   // "0.25x speed", "10 frames back", "play / pause"
+  const n = Math.abs(x), dir = x > 0 ? "forward" : "back";
+  if (action === "rate") return `${x}x speed`;
+  if (action === "step") return `${n} frame${n === 1 ? "" : "s"} ${dir}`;
+  if (action === "skip") return `${n} s ${dir}`;
+  return { play: "play / pause", motion: "motion zoom on / off", zoomreset: "reset the zoom", fullscreen: "fullscreen",
+           help: "the keys list" }[action];
+}
+</script>
+<script>
+// The keyboard: the key list (keymap.js) edited in Settings and saved in localStorage, the keys list in help, and
+// running the action of the key pressed.
+"use strict";
+
+const KEYS_SAVE = "video-viewer.bindings", OLD_KEYS_SAVE = "video-viewer.keys";   // the old one: speed keys of 1.0 - 1.1
+let bindings = loadBindings(), capturing = -1;
+
+function loadBindings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEYS_SAVE));
+    if (Array.isArray(saved)) return cleanBindings(saved);
+    const old = JSON.parse(localStorage.getItem(OLD_KEYS_SAVE));
+    if (Array.isArray(old)) return fromOldSpeedKeys(old);
   } catch (_) { /* unreadable: the defaults */ }
-  return DEFAULT_KEYS.map(p => [...p]);
+  return defaultBindings();
 }
 
-function saveKeys() {
-  localStorage.setItem(KEYS_SAVE, JSON.stringify(keys.filter(p => p[0])));   // not a new row still waiting for its key
-  renderKeys();
+function saveKeys(focus = -1) {
+  localStorage.setItem(KEYS_SAVE, JSON.stringify(bindings.filter(b => b[0])));   // not a new row still without a key
+  localStorage.removeItem(OLD_KEYS_SAVE);
+  renderKeys(focus);
 }
 
-function renderKeys() {
+const keyOf = action => bindings.find(b => b[0] && b[1] === action)?.[0] ?? "";
+const svgX = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
+function renderKeys(focus = -1) {
   const table = $("keys");
   table.textContent = "";
-  keys.forEach(([k, rate], i) => {
-    const tr = table.insertRow();
-    const key = Object.assign(document.createElement("button"), { className: "btn key", textContent: capturing === i ? "press a key…" : k.toUpperCase() });
-    key.title = "change this key";
-    key.onclick = () => { capturing = i; renderKeys(); };
-    const speed = Object.assign(document.createElement("input"), { type: "number", step: "0.05", min: MIN_RATE, max: MAX_RATE, value: rate });
-    speed.setAttribute("aria-label", `speed for key ${k.toUpperCase()}`);
-    speed.onchange = () => {
-      const r = +speed.value;
-      if (r >= MIN_RATE && r <= MAX_RATE) { keys[i][1] = r; saveKeys(); } else speed.value = keys[i][1];
+  bindings.forEach((b, i) => {
+    const [k, action, x] = b, a = ACTIONS[action], tr = table.insertRow();
+    const key = Object.assign(document.createElement("button"), { className: `btn key${capturing === i ? " wait" : ""}`,
+      textContent: capturing === i ? "press a key…" : k ? label(k) : "set key" });
+    key.title = capturing === i ? "press the new key (Esc cancels)" : "change this key";
+    key.onclick = () => { capturing = capturing === i ? -1 : i; note(capturing === i ? "Press the new key. Esc cancels." : ""); renderKeys(i); };
+    const pick = document.createElement("select");
+    pick.setAttribute("aria-label", `action for ${label(k)}`);
+    for (const [name, def] of Object.entries(ACTIONS)) pick.add(new Option(def.label, name, false, name === action));
+    pick.onchange = () => {
+      b[1] = pick.value;
+      b.length = 2;
+      if (ACTIONS[pick.value].unit) b[2] = ACTIONS[pick.value].def;
+      saveKeys();
     };
-    const del = Object.assign(document.createElement("button"), { className: "btn icon x", title: "remove this key",
-      innerHTML: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>' });
-    del.setAttribute("aria-label", "remove this key");
-    del.onclick = () => { keys.splice(i, 1); capturing = -1; saveKeys(); };
     tr.insertCell().append(key);
-    tr.insertCell().append(speed, "x");
+    tr.insertCell().append(pick);
+    const cell = tr.insertCell();
+    if (a.unit) {
+      const val = Object.assign(document.createElement("input"), { type: "number", step: a.inc, min: a.min, max: a.max, value: x });
+      val.setAttribute("aria-label", `${a.label.toLowerCase()} for ${label(k)} (${a.unit})`);
+      val.onchange = () => {
+        const n = +val.value;
+        if (validValue(action, n)) { b[2] = n; saveKeys(); } else val.value = b[2];
+      };
+      cell.append(val, ` ${a.unit}`);
+    }
+    const del = Object.assign(document.createElement("button"), { className: "btn icon x", title: "remove this key", innerHTML: svgX });
+    del.setAttribute("aria-label", `remove ${label(k)}`);
+    del.onclick = () => { bindings.splice(i, 1); capturing = -1; note(""); saveKeys(); };
     tr.insertCell().append(del);
   });
-  $("helpSpeeds").textContent = keys.filter(p => p[0]).map(([k, r]) => `${k.toUpperCase()} ${r}x`).join(" · ");
+  if (focus >= 0) table.rows[focus]?.querySelector(".key")?.focus();
   showRate();
+  renderHelp();
+  // the key hints next to the switch and the buttons follow the keys
+  const hint = (el, action) => { const k = keyOf(action); el.textContent = k ? label(k) : ""; el.hidden = !k; };
+  hint($("motionKey"), "motion");
+  hint($("fullKey"), "fullscreen");
+  const inBrackets = action => (keyOf(action) ? ` (${label(keyOf(action))})` : "");
+  $("motionLabel").title = `Zoom onto the motion${inBrackets("motion")}`;
+  $("bFull").title = `Fullscreen${inBrackets("fullscreen")}`;
+  $("bHelp").title = `Keys and help${inBrackets("help")}`;
 }
 
-function showRate() {     // light the key of the speed playing now
-  [...$("keys").rows].forEach((tr, i) => tr.classList.toggle("on", keys[i]?.[1] === v.playbackRate));
+function renderHelp() {      // one row per action that has keys, in the order of ACTIONS
+  const body = $("helpKeys");
+  body.textContent = "";
+  const kbd = k => Object.assign(document.createElement("kbd"), { textContent: label(k) });
+  for (const [action, a] of Object.entries(ACTIONS)) {
+    const mine = bindings.filter(b => b[0] && b[1] === action);
+    if (!mine.length) continue;
+    const tr = body.insertRow(), left = tr.insertCell(), right = tr.insertCell();
+    if (a.unit) {            // Speed / Frame step / Skip: each key with what it does
+      left.textContent = a.label;
+      mine.forEach((b, j) => right.append(j ? " · " : "", kbd(b[0]), ` ${describe(b)}`));
+    } else {
+      mine.forEach((b, j) => left.append(j ? " " : "", kbd(b[0])));
+      right.textContent = describe(mine[0]);
+      if (action === "fullscreen") right.append(". The player's own button and double-click work too, but there the speed and zoom messages don't show.");
+    }
+  }
+}
+
+function note(text) { $("keysNote").textContent = text; }
+
+function showRate() {     // light the speed keys of the speed playing now
+  [...$("keys").rows].forEach((tr, i) => tr.classList.toggle("on", bindings[i]?.[1] === "rate" && bindings[i][2] === v.playbackRate));
 }
 
 function stopCapture() {
-  if (capturing >= 0 && !keys[capturing][0]) keys.splice(capturing, 1);   // a new row that never got its key
+  if (capturing >= 0 && !bindings[capturing][0]) bindings.splice(capturing, 1);   // a new row that never got its key
   capturing = -1;
 }
 
-function capture(e) {     // the key pressed for the row being changed
+function capture(e) {     // the next key pressed becomes the key of row `capturing`
   e.preventDefault();
-  const k = e.key.toLowerCase(), i = capturing;
-  if (e.key === "Escape") stopCapture();
-  else if (k.length !== 1 || e.ctrlKey || e.altKey || e.metaKey) return say("press a single key (Esc cancels)", 2000);
-  else if (k in FIXED) return say(`${k === " " ? "Space" : k.toUpperCase()} is ${FIXED[k]}`, 2000);
-  else if (keys.some((p, j) => j !== i && p[0] === k)) return say(`${k.toUpperCase()} is already a speed key`, 2000);
-  else { keys[i][0] = k; capturing = -1; saveKeys(); return; }
-  renderKeys();
+  if (e.key === "Escape") { const i = capturing; stopCapture(); note(""); return renderKeys(bindings[i] ? i : -1); }
+  const k = combo(e);
+  if (!k) return;         // a modifier alone: wait for the key it goes with
+  if (!usable(k)) return note(`${label(baseKey(k))} can't be used: it ${baseKey(k) === "tab" ? "moves between controls" : "can't be told apart"}. Press another key (Esc cancels).`);
+  const b = bindings[capturing], moved = assign(bindings, capturing, k);   // rows above it can go: follow the row itself
+  capturing = -1;
+  note(moved.length ? `${label(k)} moved here from “${describe(moved[0])}”.` : `${label(k)}: ${describe(b)}.`);
+  saveKeys(bindings.indexOf(b));
+}
+
+function run([, action, x]) {
+  if (action === "rate") { v.playbackRate = v.defaultPlaybackRate = x; say(`${x}x`); }   // the default carries it on
+  else if (action === "play") v.paused ? v.play().catch(() => { /* no video yet */ }) : v.pause();
+  else if (action === "step") step(x);
+  else if (action === "skip") skip(x);
+  else if (action === "motion") setMotion(!motionOn);
+  else if (action === "zoomreset") { motionOn ? setMotion(false) : resetZoom(); say("zoom reset"); }
+  else if (action === "fullscreen") toggleFullscreen();
+  else if (action === "help") $("help").showModal();
 }
 
 addEventListener("keydown", e => {
   if (capturing >= 0) return capture(e);
-  if (e.ctrlKey || e.metaKey || e.altKey || document.querySelector("dialog[open]") ||   // an open dialog has the keys
-      e.target.matches("input[type=number], input[type=text], select, textarea")) return;
-  const k = e.key.toLowerCase();
-  if (k === " ") {        // a focused video, button or switch handles Space itself
-    if (e.target !== document.body) return;
-    v.paused ? v.play() : v.pause();
-  } else if (k === "z") setMotion(!motionOn);
-  else if (k === "0") { motionOn ? setMotion(false) : resetZoom(); say("zoom reset"); }
-  else if (k === "f") toggleFullscreen();
-  else if (k === "?") $("help").showModal();
-  else if (k === "arrowleft" || k === "arrowright") {
-    if (e.target === $("sash")) return;     // there the arrows resize the sidebar
-    step(k === "arrowright" ? 1 : -1);
-  } else if (k === "a" || k === "d") skip(k === "d" ? 1 : -1);
-  else {
-    const hit = keys.find(p => p[0] === k);
-    if (!hit) return;
-    v.playbackRate = v.defaultPlaybackRate = hit[1];   // the default carries the speed to the next video
-    say(`${hit[1]}x`);
+  if (document.querySelector("dialog[open]") || e.target.matches("input[type=number], input[type=text], select, textarea")) return;
+  const k = combo(e), hit = k && bindings.find(b => b[0] === k);
+  if (!hit) {             // the player's own Space / ← / → (seek ~1 %) on the focused video: off, so a moved key stops
+    if (e.target === v && [" ", "arrowleft", "arrowright"].includes(k)) e.preventDefault();
+    return;
   }
-  e.preventDefault();
+  if (e.target === sash && /^(shift\+)?arrow(left|right)$/.test(k)) return;   // there the arrows resize the sidebar
+  if ((k === " " || k === "enter") && e.target !== document.body && e.target !== v) return;   // a focused button presses itself
+  e.preventDefault();     // also keeps the player's own keys (Space, arrows) from acting twice
+  run(hit);
 }, true);
 
-$("addKey").onclick = () => { keys.push(["", 1]); capturing = keys.length - 1; renderKeys(); };
-$("resetKeys").onclick = () => { keys = DEFAULT_KEYS.map(p => [...p]); capturing = -1; saveKeys(); };
-$("settings").addEventListener("close", () => { if (capturing >= 0) { stopCapture(); renderKeys(); } });
+$("addKey").onclick = () => {
+  bindings.push(["", "rate", ACTIONS.rate.def]);
+  capturing = bindings.length - 1;
+  note("Press the key for the new row, then pick what it does. Esc cancels.");
+  renderKeys(capturing);
+};
+$("resetKeys").onclick = () => { bindings = defaultBindings(); capturing = -1; note("All keys are back to the defaults."); saveKeys(); };
+// A click anywhere else in Settings ends setting a key; a new row without a key stays, to set after picking its
+// action. The button changes in place: rebuilding the table here would take away what the click is landing on.
+$("settings").addEventListener("pointerdown", e => {
+  const w = $("keys").querySelector(".key.wait");
+  if (capturing < 0 || !w || e.target.closest(".key.wait")) return;
+  const k = bindings[capturing][0];
+  capturing = -1;
+  note("");
+  w.classList.remove("wait");
+  w.textContent = k ? label(k) : "set key";
+  w.title = "change this key";
+}, true);
+$("settings").addEventListener("close", () => {
+  capturing = -1;
+  bindings = bindings.filter(b => b[0]);
+  note("");
+  renderKeys();
+});
 v.addEventListener("ratechange", showRate);
 renderKeys();
 </script>

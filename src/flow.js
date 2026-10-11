@@ -52,7 +52,8 @@ async function openModel() {
   if (!navigator.gpu) throw fail("motion zoom needs WebGPU (Edge or Chrome)");
   const kept = await store("readonly", s => s.get("model")), file = kept || $("modelPick").files[0];
   if (!file) {   // a file chooser would end fullscreen, so there only say what's needed
-    if (document.fullscreenElement) throw fail("motion zoom needs its model file once: leave fullscreen (F), then press Z", true);
+    const key = a => (keyOf(a) ? ` (${label(keyOf(a))})` : "");   // the keys as set in Settings
+    if (document.fullscreenElement) throw fail(`motion zoom needs its model file once: leave fullscreen${key("fullscreen")}, then turn motion zoom on${key("motion")}`, true);
     $("modelPick").click();
     throw fail("choose the model file, neuflow_mixed.onnx (asked once)", true);
   }
@@ -130,7 +131,8 @@ async function look(a, b) {
     const out = await session.run({ [session.inputNames[0]]: a, [session.inputNames[1]]: b });
     if (motionOn) {
       follow(motionBox(out[session.outputNames[0]].data, FW, FH));
-      $("motionLabel").title = `Zoom onto the motion (Z): ${((performance.now() - t0) / 1000).toFixed(1)} s per look`;
+      const k = keyOf("motion");
+      $("motionLabel").title = `Zoom onto the motion${k ? ` (${label(k)})` : ""}: ${((performance.now() - t0) / 1000).toFixed(1)} s per look`;
     }
   } catch (e) {
     await setMotion(false);

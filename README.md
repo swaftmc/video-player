@@ -7,8 +7,10 @@ open it in Edge or Chrome from anywhere (a double-click works; no server).
   watch it. Opening another folder replaces it.
 - Add single video files (Files). They're listed under `misc/`, after the folder's videos, and stay when you open
   another folder.
-- Speed keys: 1 → 0.25x, 2 → 0.5x, 3 → 1x, 4 → 2x, 5 → 3x by default. Change a key or its speed under the sliders
-  button, or add more. The browser remembers them. The ? button (or the ? key) lists every key.
+- Speed keys: 1 → 0.25x, 2 → 0.5x, 3 → 1x, 4 → 2x, 5 → 3x by default.
+- Every key can be changed, removed or added in Settings (the sliders button), including Ctrl, Alt and Shift
+  combinations, for example Shift+→ = 10 frames forward or J = 10 seconds back. A key already in use moves to the new
+  row. The browser remembers them, and the ? button (or the ? key) lists them.
 - Fullscreen (the Fullscreen button or F) shows the video alone, and every key still works. The player's own
   fullscreen button and double-click work too, but there the speed and zoom messages don't show.
 - Motion zoom (the switch, or Z): the picture zooms onto where things move. A small optical-flow model
@@ -24,11 +26,13 @@ open it in Edge or Chrome from anywhere (a double-click works; no server).
 
 ## Use
 
+The default keys (all changeable in Settings):
+
 | key | does |
 | --- | --- |
-| 1 2 3 4 5 | 0.25x, 0.5x, 1x, 2x, 3x (changeable) |
+| 1 2 3 4 5 | 0.25x, 0.5x, 1x, 2x, 3x |
 | Z | motion zoom on / off |
-| wheel | zoom in / out (motion zoom on: tighter / looser) |
+| wheel | zoom in / out (motion zoom on: tighter / looser); not a key, so not changeable |
 | 0 | reset the zoom (and turn motion zoom off) |
 | F | fullscreen on / off (also leaves the player's own fullscreen) |
 | ← → | one frame back / forward (pauses; hold to scrub) |
@@ -61,6 +65,7 @@ The page is written as separate files in `src/`; `build.mjs` inlines them into `
 ```powershell
 node check_motion.mjs   # self-check of the motion box maths
 node check_step.mjs     # self-check of the frame-step maths
+node check_keys.mjs     # self-check of the key names and the saved keys
 node build.mjs          # src/ -> index.html
 ```
 
@@ -74,7 +79,8 @@ Layout:
 - `src/flow.js`: onnxruntime-web, the model file (kept in IndexedDB), grabbing frame pairs, running the model
 - `src/frames.js`: frame length and where a step lands (pure maths)
 - `src/step.js`: measuring the frame length, the frame steps and the 5 second skips
-- `src/keys.js`: the speed keys, their table in the Settings dialog and the keyboard
+- `src/keymap.js`: the actions, the default keys, key names, and checking the saved keys (pure)
+- `src/keys.js`: the keys table in Settings, the keys list in help, and the keyboard
 - `src/library.js`: the folder, the misc/ files and the video list
 
 ## Known limits
@@ -91,6 +97,8 @@ Layout:
 - Frame steps use one frame length per video. Constant-rate clips step exactly; a variable-frame-rate clip (some
   phone videos) can be off by a frame in places.
 - A step before the video has played at all plays a few frames muted to measure the frame length, then stops.
+- Esc and Tab can't be set as keys, and the browser keeps a few combinations (such as Ctrl+W, Ctrl+T, Ctrl+N) that
+  never reach the page. Keys are saved by the character they type, so a different keyboard layout may need them set again.
 
 ## Licence
 

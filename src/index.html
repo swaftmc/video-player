@@ -21,20 +21,20 @@
   <h1 id="folder" hidden></h1>
   <ul id="list"><li class="empty">Open a folder or files to start.</li></ul>
   <div class="foot">
-    <label class="switch" id="motionLabel" title="Zoom onto the motion (Z)">
-      <input type="checkbox" id="motion" role="switch"> Motion zoom <kbd>Z</kbd>
+    <label class="switch" id="motionLabel" title="Zoom onto the motion">
+      <input type="checkbox" id="motion" role="switch"> Motion zoom <kbd id="motionKey"></kbd>
     </label>
     <p id="motionState" aria-live="polite" hidden></p>
     <label class="btn" id="modelLabel" hidden>Choose model file…<input type="file" id="modelPick" class="vh" accept=".onnx"></label>
     <div class="bar">
-      <button class="btn grow" id="bFull" title="Fullscreen (F)">
+      <button class="btn grow" id="bFull" title="Fullscreen">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
-        Fullscreen <kbd>F</kbd>
+        Fullscreen <kbd id="fullKey"></kbd>
       </button>
-      <button class="btn icon" id="bSettings" title="Settings: theme and speed keys" aria-label="Settings">
+      <button class="btn icon" id="bSettings" title="Settings: theme and keys" aria-label="Settings">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
       </button>
-      <button class="btn icon" id="bHelp" title="Keys and help (?)" aria-label="Help">
+      <button class="btn icon" id="bHelp" title="Keys and help" aria-label="Help">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.7M12 17h.01"/></svg>
       </button>
     </div>
@@ -55,9 +55,12 @@
     <label><input type="radio" name="theme" value="light" class="vh"> Light</label>
     <label><input type="radio" name="theme" value="dark" class="vh"> Dark</label>
   </div></fieldset>
-  <h3>Speed keys</h3>
-  <p class="hint">Click a key to change it, or type a new speed.</p>
+  <h3>Keys</h3>
+  <p class="hint">Click a key to change it, then press the new one (Ctrl, Alt and Shift combinations work). A key
+    already in use moves to the new row. Frame step and Skip go back with a minus number. Esc and Tab can't be used,
+    and the browser keeps a few combinations for itself (such as Ctrl+W and Ctrl+T).</p>
   <table id="keys"></table>
+  <p id="keysNote" class="note" aria-live="polite"></p>
   <p class="row"><button class="btn" id="addKey">Add a key</button><button class="btn" id="resetKeys">Defaults</button></p>
 </dialog>
 
@@ -65,17 +68,11 @@
   <form method="dialog" class="head"><h2 id="helpTitle">Keys</h2><button class="btn icon" aria-label="Close">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></form>
   <table class="keylist">
-    <tr><td>Speed</td><td id="helpSpeeds"></td></tr>
-    <tr><td><kbd>Z</kbd></td><td>motion zoom on / off</td></tr>
-    <tr><td>wheel</td><td>zoom at the cursor (motion zoom on: tighter / looser)</td></tr>
-    <tr><td><kbd>0</kbd></td><td>reset the zoom</td></tr>
-    <tr><td><kbd>F</kbd></td><td>fullscreen. The player's own button and double-click work too, but there the speed and zoom messages don't show.</td></tr>
-    <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>one frame back / forward (pauses)</td></tr>
-    <tr><td><kbd>A</kbd> <kbd>D</kbd></td><td>5 seconds back / forward</td></tr>
-    <tr><td><kbd>Space</kbd></td><td>play / pause</td></tr>
-    <tr><td><kbd>?</kbd></td><td>this list</td></tr>
+    <tbody id="helpKeys"></tbody>
+    <tbody><tr><td>wheel</td><td>zoom at the cursor (motion zoom on: tighter / looser)</td></tr></tbody>
   </table>
-  <p class="hint">Motion zoom needs Edge or Chrome. The first time, it asks for the model file
+  <p class="hint">Change the keys in Settings (the sliders button). A frame step pauses the video.
+    Motion zoom needs Edge or Chrome. The first time, it asks for the model file
     <code>neuflow_mixed.onnx</code> and downloads onnxruntime-web (about 25 MB) once; the browser keeps both.</p>
 </dialog>
 
@@ -85,6 +82,7 @@
 <script src="flow.js"></script>
 <script src="frames.js"></script>
 <script src="step.js"></script>
+<script src="keymap.js"></script>
 <script src="keys.js"></script>
 <script src="library.js"></script>
 </body>

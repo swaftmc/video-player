@@ -93,10 +93,16 @@ dialog h3, .theme legend { margin: 16px 0 6px; padding: 0; color: var(--dim); fo
 .seg label:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; position: relative; }
 .hint { margin: 8px 0; color: var(--dim); font-size: 12px; }
 .row { display: flex; gap: 8px; margin: 12px 0 0; }
+dialog#settings { width: min(500px, calc(100vw - 48px)); }
 #keys { border-collapse: collapse; }
-#keys td { padding: 3px 6px 3px 0; color: var(--dim); }
-#keys .key { min-width: 64px; color: var(--text); }
-#keys tr.on .key { border-color: var(--accent); background: var(--accent); color: #fff; }
+#keys td { padding: 3px 6px 3px 0; color: var(--dim); white-space: nowrap; }
+#keys .key { min-width: 92px; color: var(--text); }
+#keys .key.wait { border-color: var(--accent); color: var(--accent); }
+#keys select { height: 34px; padding: 0 6px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg);
+               color: var(--text); font: inherit; }
+#keys select:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.note { min-height: 1.4em; margin: 6px 0 0; color: var(--text); font-size: 12px; }
+#keys tr.on .key:not(.wait) { border-color: var(--accent); background: var(--accent); color: #fff; }
 #keys input { width: 72px; height: 34px; box-sizing: border-box; margin-right: 4px; padding: 0 8px; border: 1px solid var(--line);
               border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
 #keys input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
@@ -104,4 +110,4 @@ dialog h3, .theme legend { margin: 16px 0 6px; padding: 0; color: var(--dim); fo
 #keys .x:hover { background: var(--btn); color: var(--text); }
 .keylist { border-collapse: collapse; width: 100%; }
 .keylist td { padding: 5px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
-.keylist td:first-child { width: 72px; color: var(--dim); }
+.keylist td:first-child { width: 88px; padding-right: 8px; color: var(--dim); }

@@ -1,9 +1,8 @@
-// Arrow keys: one frame back / forward. A and D: 5 seconds back / forward. The frame length is measured while the video
-// plays (frames.js); a step seeks to the middle of the wanted frame, so rounding can't skip or repeat one.
+// Frame steps (n frames, back when n < 0) and skips (s seconds). The frame length is measured while the video plays
+// (frames.js); a step seeks to the middle of the wanted frame, so rounding can't skip or repeat one.
 "use strict";
 
 const GAPS_NEEDED = 5;    // frame gaps seen while playing before the frame length is trusted
-const SKIP = 5;           // seconds for A and D
 let frameLen = 0, gaps = 0, lastT = -1, shownT = -1, pending = null, pendingTimer = 0, measuring = false;
 // shownT: the time of the frame on screen. pending: the frame a step is heading for, so steps pressed before it
 // arrives (a held key) go on from there instead of from the old frame.
@@ -41,12 +40,12 @@ async function measure() {   // a step before any playback: play a few frames mu
   return ok;
 }
 
-async function step(dir) {
+async function step(n) {
   if (!v.videoWidth || shownT < 0 || measuring) return;
   const base = pending ?? shownT;            // before measure(), which plays on
   v.pause();
   if (gaps < GAPS_NEEDED && !(await measure())) return say("can't tell this video's frame rate", 2500);
-  const next = stepFrom(base, dir, frameLen, v.duration);
+  const next = stepFrom(base, n, frameLen, v.duration);
   if (Math.abs(next - base) < frameLen / 2) return;       // already on the first / last frame
   pending = next;
   clearTimeout(pendingTimer);
@@ -55,9 +54,9 @@ async function step(dir) {
   say(`${next.toFixed(2)} s`, 700);
 }
 
-function skip(dir) {
+function skip(s) {
   if (!v.videoWidth) return;
   pending = null;
-  v.currentTime = clamp(v.currentTime + dir * SKIP, 0, v.duration);
-  say(`${dir > 0 ? "+" : "−"}${SKIP} s`, 700);
+  v.currentTime = clamp(v.currentTime + s, 0, v.duration);
+  say(`${s > 0 ? "+" : "−"}${Math.abs(s)} s`, 700);
 }
