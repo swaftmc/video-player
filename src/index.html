@@ -8,25 +8,61 @@
 </head>
 <body>
 <aside>
-  <label class="button">Open folder…<input type="file" id="pick" class="vh" webkitdirectory multiple></label>
-  <p id="count">No folder open.</p>
-  <ul id="list"></ul>
-
-  <h2>Motion zoom</h2>
-  <label class="switch"><input type="checkbox" id="motion" role="switch"> Zoom onto the motion <kbd>Z</kbd></label>
-  <p id="motionState" aria-live="polite"></p>
-  <label class="button" id="modelLabel" hidden>Choose model file…<input type="file" id="modelPick" class="vh" accept=".onnx"></label>
-  <p class="hint">The wheel over the video zooms; with motion zoom on it frames tighter or looser. <kbd>0</kbd> resets.
-    <kbd>Space</kbd> plays and pauses.</p>
-
-  <h2>Speed keys</h2>
-  <table id="keys"></table>
-  <p><button id="addKey">Add a key</button> <button id="resetKeys">Defaults</button></p>
+  <div class="bar">
+    <label class="btn primary" title="Open a folder of videos">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      Open folder<input type="file" id="pick" class="vh" webkitdirectory multiple>
+    </label>
+    <button class="btn icon" id="bSettings" title="Speed keys" aria-label="Speed keys">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+    </button>
+    <button class="btn icon" id="bHelp" title="Keys and help (?)" aria-label="Help">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.7M12 17h.01"/></svg>
+    </button>
+  </div>
+  <h1 id="folder" hidden></h1>
+  <ul id="list"><li class="empty">Open a folder to start.</li></ul>
+  <div class="foot">
+    <label class="switch" id="motionLabel" title="Zoom onto the motion (Z)">
+      <input type="checkbox" id="motion" role="switch"> Motion zoom <kbd>Z</kbd>
+    </label>
+    <p id="motionState" aria-live="polite" hidden></p>
+    <label class="btn" id="modelLabel" hidden>Choose model file…<input type="file" id="modelPick" class="vh" accept=".onnx"></label>
+    <button class="btn" id="bFull" title="Fullscreen (F)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      Fullscreen <kbd>F</kbd>
+    </button>
+  </div>
 </aside>
-<main>
-  <video id="v" controls tabindex="0"></video>
+<main id="stage">
+  <video id="v" controls controlslist="nofullscreen" tabindex="0"></video>
   <div id="msg" aria-live="polite" hidden></div>
 </main>
+
+<dialog id="settings" aria-labelledby="settingsTitle">
+  <form method="dialog" class="head"><h2 id="settingsTitle">Speed keys</h2><button class="btn icon" aria-label="Close">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></form>
+  <p class="hint">Click a key to change it, or type a new speed.</p>
+  <table id="keys"></table>
+  <p class="row"><button class="btn" id="addKey">Add a key</button><button class="btn" id="resetKeys">Defaults</button></p>
+</dialog>
+
+<dialog id="help" aria-labelledby="helpTitle">
+  <form method="dialog" class="head"><h2 id="helpTitle">Keys</h2><button class="btn icon" aria-label="Close">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></form>
+  <table class="keylist">
+    <tr><td>Speed</td><td id="helpSpeeds"></td></tr>
+    <tr><td><kbd>Z</kbd></td><td>motion zoom on / off</td></tr>
+    <tr><td>wheel</td><td>zoom at the cursor (motion zoom on: tighter / looser)</td></tr>
+    <tr><td><kbd>0</kbd></td><td>reset the zoom</td></tr>
+    <tr><td><kbd>F</kbd></td><td>fullscreen (or double-click the video)</td></tr>
+    <tr><td><kbd>Space</kbd></td><td>play / pause</td></tr>
+    <tr><td><kbd>?</kbd></td><td>this list</td></tr>
+  </table>
+  <p class="hint">Motion zoom needs Edge or Chrome. The first time, it asks for the model file
+    <code>neuflow_mixed.onnx</code> and downloads onnxruntime-web (about 25 MB) once; the browser keeps both.</p>
+</dialog>
+
 <script src="ui.js"></script>
 <script src="motion.js"></script>
 <script src="zoom.js"></script>

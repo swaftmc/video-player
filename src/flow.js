@@ -13,9 +13,11 @@ let motionOn = false, session = null, sessionP = null, ortP = null, busy = false
 const grabCv = Object.assign(document.createElement("canvas"), { width: FW, height: FH });
 const grabCtx = grabCv.getContext("2d", { willReadFrequently: true });
 
-function status(text, needFile = false) {
+function status(text, needFile = false) {  // shown only while loading or after a problem; the sidebar hides in fullscreen
   $("motionState").textContent = text;
+  $("motionState").hidden = !text;
   $("modelLabel").hidden = !needFile;
+  if (text && document.fullscreenElement) say(text, 4000);
 }
 const fail = (text, needFile = false) => Object.assign(new Error(text), { needFile });
 
@@ -26,7 +28,7 @@ async function setMotion(on) {
   try {
     if (!canZoom) throw fail("zooming needs Edge or Chrome");
     await (sessionP ??= openModel().catch(e => { sessionP = null; throw e; }));
-    if (motionOn) status(v.paused ? "on: play the video" : "on: looking for motion…");
+    status("");
   } catch (e) {
     motionOn = $("motion").checked = false;
     status(e.message, e.needFile);
@@ -49,7 +51,8 @@ function store(mode, op) {  // one request on the "files" store of this page's I
 async function openModel() {
   if (!navigator.gpu) throw fail("motion zoom needs WebGPU (Edge or Chrome)");
   const kept = await store("readonly", s => s.get("model")), file = kept || $("modelPick").files[0];
-  if (!file) {
+  if (!file) {   // a file chooser would end fullscreen, so there only say what's needed
+    if (document.fullscreenElement) throw fail("motion zoom needs its model file once: leave fullscreen (F), then press Z", true);
     $("modelPick").click();
     throw fail("choose the model file, neuflow_mixed.onnx (asked once)", true);
   }
@@ -127,7 +130,7 @@ async function look(a, b) {
     const out = await session.run({ [session.inputNames[0]]: a, [session.inputNames[1]]: b });
     if (motionOn) {
       follow(motionBox(out[session.outputNames[0]].data, FW, FH));
-      status(`on: ${((performance.now() - t0) / 1000).toFixed(1)} s per look`);
+      $("motionLabel").title = `Zoom onto the motion (Z): ${((performance.now() - t0) / 1000).toFixed(1)} s per look`;
     }
   } catch (e) {
     await setMotion(false);
@@ -137,6 +140,5 @@ async function look(a, b) {
 }
 
 v.requestVideoFrameCallback(onFrame);
-v.addEventListener("play", () => { if (motionOn && session) status("on: looking for motion…"); });
 $("motion").addEventListener("change", e => setMotion(e.target.checked));
 $("modelPick").addEventListener("change", () => { if ($("modelPick").files[0]) setMotion(true); });

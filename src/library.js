@@ -5,20 +5,25 @@ const VIDEO_EXT = /\.(mp4|m4v|mov|webm|mkv|ogv)$/i;
 let videoUrl = "";
 
 $("pick").addEventListener("change", () => {
+  const all = [...$("pick").files];
+  if (!all.length) return;                                // the picker was cancelled: keep the list
   const path = f => f.webkitRelativePath || f.name;
-  const files = [...$("pick").files].filter(f => f.type.startsWith("video/") || VIDEO_EXT.test(f.name))
+  const files = all.filter(f => f.type.startsWith("video/") || VIDEO_EXT.test(f.name))
     .sort((a, b) => path(a).localeCompare(path(b), undefined, { numeric: true }));
+  $("folder").textContent = $("folder").title = path(all[0]).split("/")[0];
+  $("folder").hidden = false;
   const list = $("list");
   list.textContent = "";
   for (const f of files) {
-    const b = Object.assign(document.createElement("button"), { textContent: path(f).replace(/^[^/]*\//, ""), title: path(f) });
+    const rel = path(f).replace(/^[^/]*\//, ""), cut = rel.lastIndexOf("/") + 1;   // the root folder is the heading
+    const b = Object.assign(document.createElement("button"), { title: rel });
+    b.append(Object.assign(document.createElement("span"), { className: "dir", textContent: rel.slice(0, cut) }), rel.slice(cut));
     b.onclick = () => play(f, b);
     const li = document.createElement("li");
     li.append(b);
     list.append(li);
   }
-  const root = path($("pick").files[0] || { name: "" }).split("/")[0];
-  $("count").textContent = files.length ? `${root}: ${files.length} video${files.length > 1 ? "s" : ""}` : "No videos in that folder.";
+  if (!files.length) list.innerHTML = '<li class="empty">No videos in this folder.</li>';
 });
 
 function play(f, b) {

@@ -5,70 +5,144 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Video viewer</title>
 <style>
-:root { color-scheme: dark; font: 14px/1.4 system-ui, sans-serif; }
+:root { color-scheme: dark; --bg: #101114; --panel: #17181c; --line: #2a2c33; --text: #e4e5e9; --dim: #8b8e98;
+        --btn: #23252b; --btn-hover: #2d3038; --accent: #3b82f6; --accent-hover: #4b8ff7; --focus: #7aa7ff;
+        font: 14px/1.4 system-ui, sans-serif; }
 [hidden] { display: none !important; }
-body { margin: 0; height: 100vh; display: grid; grid-template-columns: 300px 1fr; background: #111; color: #ddd; }
-aside { overflow: auto; padding: 12px; border-right: 1px solid #333; }
-main { position: relative; min-width: 0; min-height: 0; background: #000; }
-video { display: block; width: 100%; height: 100%; object-fit: contain; outline: none; }
-h2 { margin: 20px 0 6px; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: #999; }
-p { margin: 6px 0; }
-.hint { color: #999; font-size: 12px; }
-kbd { padding: 0 4px; border: 1px solid #555; border-radius: 3px; font: 12px ui-monospace, monospace; }
+body { margin: 0; height: 100vh; overflow: hidden; display: grid; grid-template-columns: 260px 1fr;
+       background: var(--bg); color: var(--text); }
+svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2;
+      stroke-linecap: round; stroke-linejoin: round; }
+kbd { padding: 0 5px; border: 1px solid var(--line); border-radius: 4px; color: var(--dim);
+      font: 11px/16px ui-monospace, monospace; }
 
-button, .button { display: inline-block; padding: 4px 10px; border: 1px solid #555; border-radius: 4px;
-                  background: #2a2a2a; color: inherit; font: inherit; cursor: pointer; }
-button:hover, .button:hover { background: #333; }
-.button:focus-within, button:focus-visible { outline: 2px solid #6af; outline-offset: 1px; }
+/* sidebar: the buttons on top, the list taking the rest of the height, the switch and fullscreen at the bottom */
+aside { display: flex; flex-direction: column; min-height: 0; background: var(--panel); border-right: 1px solid var(--line); }
+.bar { display: flex; gap: 6px; padding: 12px; }
+.bar .primary { flex: 1; }
+#folder { margin: 0; padding: 0 14px 6px; overflow: hidden; color: var(--dim); font-size: 12px; font-weight: 600;
+          letter-spacing: .04em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+#list { flex: 1; min-height: 0; margin: 0; padding: 0 8px; overflow: auto; list-style: none; }
+#list button { display: block; width: 100%; padding: 7px 8px; overflow: hidden; border: 0; border-radius: 6px;
+               background: none; color: inherit; font: inherit; text-align: left; text-overflow: ellipsis;
+               white-space: nowrap; cursor: pointer; }
+#list button:hover { background: var(--btn); }
+#list button.on { background: var(--accent); color: #fff; }
+#list .dir { color: var(--dim); }
+#list button.on .dir { color: #ffffffb0; }
+#list .empty { padding: 7px 8px; color: var(--dim); }
+.foot { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-top: 1px solid var(--line); }
+#motionState { margin: 0; color: var(--dim); font-size: 12px; }
+
+/* buttons */
+.btn { display: inline-flex; gap: 8px; align-items: center; justify-content: center; height: 34px; padding: 0 12px;
+       box-sizing: border-box; border: 1px solid var(--line); border-radius: 8px; background: var(--btn);
+       color: inherit; font: inherit; cursor: pointer; user-select: none; transition: background .12s; }
+.btn:hover { background: var(--btn-hover); }
+.btn:active { transform: translateY(1px); }
+.btn.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+.btn.primary:hover { background: var(--accent-hover); }
+.btn.icon { width: 34px; padding: 0; }
+.btn kbd { margin-left: auto; }
+.btn:focus-visible, .btn:has(.vh:focus-visible), #list button:focus-visible, .switch input:focus-visible {
+  outline: 2px solid var(--focus); outline-offset: 2px; }
 .vh { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }   /* hidden but focusable */
 
-#list { margin: 6px 0 0; padding: 0; list-style: none; }
-#list button { display: block; width: 100%; padding: 4px 6px; border: 0; background: none; text-align: left;
-               overflow-wrap: anywhere; }
-#list button:hover { background: #222; }
-#list button.on { background: #2d4a7a; }
+.switch { display: flex; gap: 10px; align-items: center; cursor: pointer; user-select: none; }
+.switch kbd { margin-left: auto; }
+.switch input { appearance: none; flex: none; width: 36px; height: 20px; margin: 0; border-radius: 10px; cursor: pointer;
+                background: radial-gradient(circle at 10px 50%, #c9cbd1 6px, transparent 7px) #3a3d45;
+                transition: background-color .15s; }
+.switch input:checked { background: radial-gradient(circle at 26px 50%, #fff 6px, transparent 7px) var(--accent); }
 
-.switch { display: flex; gap: 8px; align-items: center; cursor: pointer; }
-.switch input { appearance: none; flex: none; width: 34px; height: 18px; margin: 0; border-radius: 9px; cursor: pointer;
-                background: radial-gradient(circle at 9px 50%, #ddd 6px, transparent 7px) #444; }
-.switch input:checked { background: radial-gradient(circle at 25px 50%, #fff 6px, transparent 7px) #3b7be0; }
-.switch input:focus-visible { outline: 2px solid #6af; outline-offset: 1px; }
-#motionState { min-height: 1.4em; color: #9bd; font-size: 12px; }
+/* the video; fullscreen is this area alone, so the messages over it still show */
+main { position: relative; min-width: 0; min-height: 0; background: #000; }
+video { display: block; width: 100%; height: 100%; object-fit: contain; outline: none; }
+video::-webkit-media-controls-fullscreen-button { display: none; }   /* controlslist only greys it out */
+#msg { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); padding: 7px 14px; border-radius: 8px;
+       background: #000000c0; color: #fff; pointer-events: none; }
 
+/* settings and help */
+dialog { width: min(420px, calc(100vw - 48px)); padding: 16px 18px 18px; border: 1px solid var(--line);
+         border-radius: 12px; background: var(--panel); color: var(--text); box-shadow: 0 20px 60px #0008; }
+dialog::backdrop { background: #0009; }
+dialog .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+dialog h2 { margin: 0; font-size: 16px; }
+.hint { margin: 8px 0; color: var(--dim); font-size: 12px; }
+.row { display: flex; gap: 8px; margin: 12px 0 0; }
 #keys { border-collapse: collapse; }
-#keys td { padding: 2px 4px 2px 0; }
-#keys .key { min-width: 44px; }
-#keys tr.on .key { background: #3b7be0; border-color: #3b7be0; }
-#keys input { width: 64px; margin-right: 2px; }
-#keys .x { padding: 2px 6px; border-color: transparent; background: none; color: #999; }
-
-#msg { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); padding: 6px 12px; border-radius: 6px;
-       background: #000c; pointer-events: none; }
+#keys td { padding: 3px 6px 3px 0; color: var(--dim); }
+#keys .key { min-width: 64px; color: var(--text); }
+#keys tr.on .key { border-color: var(--accent); background: var(--accent); color: #fff; }
+#keys input { width: 72px; height: 34px; box-sizing: border-box; margin-right: 4px; padding: 0 8px; border: 1px solid var(--line);
+              border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
+#keys input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+#keys .x { border-color: transparent; background: none; color: var(--dim); }
+#keys .x:hover { background: var(--btn); color: var(--text); }
+.keylist { border-collapse: collapse; width: 100%; }
+.keylist td { padding: 5px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.keylist td:first-child { width: 72px; color: var(--dim); }
 </style>
 </head>
 <body>
 <aside>
-  <label class="button">Open folder…<input type="file" id="pick" class="vh" webkitdirectory multiple></label>
-  <p id="count">No folder open.</p>
-  <ul id="list"></ul>
-
-  <h2>Motion zoom</h2>
-  <label class="switch"><input type="checkbox" id="motion" role="switch"> Zoom onto the motion <kbd>Z</kbd></label>
-  <p id="motionState" aria-live="polite"></p>
-  <label class="button" id="modelLabel" hidden>Choose model file…<input type="file" id="modelPick" class="vh" accept=".onnx"></label>
-  <p class="hint">The wheel over the video zooms; with motion zoom on it frames tighter or looser. <kbd>0</kbd> resets.
-    <kbd>Space</kbd> plays and pauses.</p>
-
-  <h2>Speed keys</h2>
-  <table id="keys"></table>
-  <p><button id="addKey">Add a key</button> <button id="resetKeys">Defaults</button></p>
+  <div class="bar">
+    <label class="btn primary" title="Open a folder of videos">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      Open folder<input type="file" id="pick" class="vh" webkitdirectory multiple>
+    </label>
+    <button class="btn icon" id="bSettings" title="Speed keys" aria-label="Speed keys">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+    </button>
+    <button class="btn icon" id="bHelp" title="Keys and help (?)" aria-label="Help">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.7M12 17h.01"/></svg>
+    </button>
+  </div>
+  <h1 id="folder" hidden></h1>
+  <ul id="list"><li class="empty">Open a folder to start.</li></ul>
+  <div class="foot">
+    <label class="switch" id="motionLabel" title="Zoom onto the motion (Z)">
+      <input type="checkbox" id="motion" role="switch"> Motion zoom <kbd>Z</kbd>
+    </label>
+    <p id="motionState" aria-live="polite" hidden></p>
+    <label class="btn" id="modelLabel" hidden>Choose model file…<input type="file" id="modelPick" class="vh" accept=".onnx"></label>
+    <button class="btn" id="bFull" title="Fullscreen (F)">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      Fullscreen <kbd>F</kbd>
+    </button>
+  </div>
 </aside>
-<main>
-  <video id="v" controls tabindex="0"></video>
+<main id="stage">
+  <video id="v" controls controlslist="nofullscreen" tabindex="0"></video>
   <div id="msg" aria-live="polite" hidden></div>
 </main>
+
+<dialog id="settings" aria-labelledby="settingsTitle">
+  <form method="dialog" class="head"><h2 id="settingsTitle">Speed keys</h2><button class="btn icon" aria-label="Close">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></form>
+  <p class="hint">Click a key to change it, or type a new speed.</p>
+  <table id="keys"></table>
+  <p class="row"><button class="btn" id="addKey">Add a key</button><button class="btn" id="resetKeys">Defaults</button></p>
+</dialog>
+
+<dialog id="help" aria-labelledby="helpTitle">
+  <form method="dialog" class="head"><h2 id="helpTitle">Keys</h2><button class="btn icon" aria-label="Close">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></form>
+  <table class="keylist">
+    <tr><td>Speed</td><td id="helpSpeeds"></td></tr>
+    <tr><td><kbd>Z</kbd></td><td>motion zoom on / off</td></tr>
+    <tr><td>wheel</td><td>zoom at the cursor (motion zoom on: tighter / looser)</td></tr>
+    <tr><td><kbd>0</kbd></td><td>reset the zoom</td></tr>
+    <tr><td><kbd>F</kbd></td><td>fullscreen (or double-click the video)</td></tr>
+    <tr><td><kbd>Space</kbd></td><td>play / pause</td></tr>
+    <tr><td><kbd>?</kbd></td><td>this list</td></tr>
+  </table>
+  <p class="hint">Motion zoom needs Edge or Chrome. The first time, it asks for the model file
+    <code>neuflow_mixed.onnx</code> and downloads onnxruntime-web (about 25 MB) once; the browser keeps both.</p>
+</dialog>
+
 <script>
-// Shared by the other scripts: the element lookup, the video, the message shown over it, clamp.
+// Shared by the other scripts: the element lookup, the video, the message shown over it, clamp, fullscreen, dialogs.
 "use strict";
 
 const $ = id => document.getElementById(id);
@@ -83,6 +157,18 @@ function say(text, ms = 1200) {
   clearTimeout(sayTimer);
   sayTimer = setTimeout(() => { m.hidden = true; }, ms);
 }
+
+// The video area alone goes fullscreen (not the <video>), so the messages still show and the page still gets the keys;
+// the video's own fullscreen button is hidden (controlslist) for the same reason.
+function toggleFullscreen() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else $("stage").requestFullscreen().catch(e => say(`fullscreen refused: ${e.message}`, 3000));
+}
+
+$("bFull").onclick = toggleFullscreen;
+v.addEventListener("dblclick", toggleFullscreen);
+$("bSettings").onclick = () => $("settings").showModal();
+$("bHelp").onclick = () => $("help").showModal();
 </script>
 <script>
 // Where the frame moves: the box around the main motion in an optical-flow field, and the view that frames it.
@@ -206,9 +292,11 @@ let motionOn = false, session = null, sessionP = null, ortP = null, busy = false
 const grabCv = Object.assign(document.createElement("canvas"), { width: FW, height: FH });
 const grabCtx = grabCv.getContext("2d", { willReadFrequently: true });
 
-function status(text, needFile = false) {
+function status(text, needFile = false) {  // shown only while loading or after a problem; the sidebar hides in fullscreen
   $("motionState").textContent = text;
+  $("motionState").hidden = !text;
   $("modelLabel").hidden = !needFile;
+  if (text && document.fullscreenElement) say(text, 4000);
 }
 const fail = (text, needFile = false) => Object.assign(new Error(text), { needFile });
 
@@ -219,7 +307,7 @@ async function setMotion(on) {
   try {
     if (!canZoom) throw fail("zooming needs Edge or Chrome");
     await (sessionP ??= openModel().catch(e => { sessionP = null; throw e; }));
-    if (motionOn) status(v.paused ? "on: play the video" : "on: looking for motion…");
+    status("");
   } catch (e) {
     motionOn = $("motion").checked = false;
     status(e.message, e.needFile);
@@ -242,7 +330,8 @@ function store(mode, op) {  // one request on the "files" store of this page's I
 async function openModel() {
   if (!navigator.gpu) throw fail("motion zoom needs WebGPU (Edge or Chrome)");
   const kept = await store("readonly", s => s.get("model")), file = kept || $("modelPick").files[0];
-  if (!file) {
+  if (!file) {   // a file chooser would end fullscreen, so there only say what's needed
+    if (document.fullscreenElement) throw fail("motion zoom needs its model file once: leave fullscreen (F), then press Z", true);
     $("modelPick").click();
     throw fail("choose the model file, neuflow_mixed.onnx (asked once)", true);
   }
@@ -320,7 +409,7 @@ async function look(a, b) {
     const out = await session.run({ [session.inputNames[0]]: a, [session.inputNames[1]]: b });
     if (motionOn) {
       follow(motionBox(out[session.outputNames[0]].data, FW, FH));
-      status(`on: ${((performance.now() - t0) / 1000).toFixed(1)} s per look`);
+      $("motionLabel").title = `Zoom onto the motion (Z): ${((performance.now() - t0) / 1000).toFixed(1)} s per look`;
     }
   } catch (e) {
     await setMotion(false);
@@ -330,16 +419,15 @@ async function look(a, b) {
 }
 
 v.requestVideoFrameCallback(onFrame);
-v.addEventListener("play", () => { if (motionOn && session) status("on: looking for motion…"); });
 $("motion").addEventListener("change", e => setMotion(e.target.checked));
 $("modelPick").addEventListener("change", () => { if ($("modelPick").files[0]) setMotion(true); });
 </script>
 <script>
-// Speed keys: [key, speed] pairs, edited in the sidebar and saved in localStorage. Z, 0 and Space are fixed.
+// Speed keys: [key, speed] pairs, edited in the Speed keys dialog and saved in localStorage; the other keys are fixed.
 "use strict";
 
 const DEFAULT_KEYS = [["1", 0.25], ["2", 0.5], ["3", 1], ["4", 2], ["5", 3]];
-const FIXED = { z: "motion zoom", 0: "reset zoom", " ": "play / pause" };
+const FIXED = { z: "motion zoom", 0: "reset zoom", f: "fullscreen", "?": "the keys list", " ": "play / pause" };
 const MIN_RATE = 0.0625, MAX_RATE = 16;   // the playbackRate range Chromium accepts
 const KEYS_SAVE = "video-viewer.keys";
 let keys = loadKeys(), capturing = -1;
@@ -363,7 +451,7 @@ function renderKeys() {
   table.textContent = "";
   keys.forEach(([k, rate], i) => {
     const tr = table.insertRow();
-    const key = Object.assign(document.createElement("button"), { className: "key", textContent: capturing === i ? "press a key…" : k.toUpperCase() });
+    const key = Object.assign(document.createElement("button"), { className: "btn key", textContent: capturing === i ? "press a key…" : k.toUpperCase() });
     key.title = "change this key";
     key.onclick = () => { capturing = i; renderKeys(); };
     const speed = Object.assign(document.createElement("input"), { type: "number", step: "0.05", min: MIN_RATE, max: MAX_RATE, value: rate });
@@ -372,12 +460,15 @@ function renderKeys() {
       const r = +speed.value;
       if (r >= MIN_RATE && r <= MAX_RATE) { keys[i][1] = r; saveKeys(); } else speed.value = keys[i][1];
     };
-    const del = Object.assign(document.createElement("button"), { className: "x", textContent: "✕", title: "remove this key" });
+    const del = Object.assign(document.createElement("button"), { className: "btn icon x", title: "remove this key",
+      innerHTML: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>' });
+    del.setAttribute("aria-label", "remove this key");
     del.onclick = () => { keys.splice(i, 1); capturing = -1; saveKeys(); };
     tr.insertCell().append(key);
     tr.insertCell().append(speed, "x");
     tr.insertCell().append(del);
   });
+  $("helpSpeeds").textContent = keys.filter(p => p[0]).map(([k, r]) => `${k.toUpperCase()} ${r}x`).join(" · ");
   showRate();
 }
 
@@ -385,13 +476,15 @@ function showRate() {     // light the key of the speed playing now
   [...$("keys").rows].forEach((tr, i) => tr.classList.toggle("on", keys[i]?.[1] === v.playbackRate));
 }
 
+function stopCapture() {
+  if (capturing >= 0 && !keys[capturing][0]) keys.splice(capturing, 1);   // a new row that never got its key
+  capturing = -1;
+}
+
 function capture(e) {     // the key pressed for the row being changed
   e.preventDefault();
   const k = e.key.toLowerCase(), i = capturing;
-  if (e.key === "Escape") {
-    if (!keys[i][0]) keys.splice(i, 1);                 // a new row that never got its key
-    capturing = -1;
-  }
+  if (e.key === "Escape") stopCapture();
   else if (k.length !== 1 || e.ctrlKey || e.altKey || e.metaKey) return say("press a single key (Esc cancels)", 2000);
   else if (k in FIXED) return say(`${k === " " ? "Space" : k.toUpperCase()} is ${FIXED[k]}`, 2000);
   else if (keys.some((p, j) => j !== i && p[0] === k)) return say(`${k.toUpperCase()} is already a speed key`, 2000);
@@ -401,13 +494,16 @@ function capture(e) {     // the key pressed for the row being changed
 
 addEventListener("keydown", e => {
   if (capturing >= 0) return capture(e);
-  if (e.ctrlKey || e.metaKey || e.altKey || e.target.matches("input[type=number], input[type=text], select, textarea")) return;
+  if (e.ctrlKey || e.metaKey || e.altKey || document.querySelector("dialog[open]") ||   // an open dialog has the keys
+      e.target.matches("input[type=number], input[type=text], select, textarea")) return;
   const k = e.key.toLowerCase();
   if (k === " ") {        // a focused video, button or switch handles Space itself
     if (e.target !== document.body) return;
     v.paused ? v.play() : v.pause();
   } else if (k === "z") setMotion(!motionOn);
   else if (k === "0") { motionOn ? setMotion(false) : resetZoom(); say("zoom reset"); }
+  else if (k === "f") toggleFullscreen();
+  else if (k === "?") $("help").showModal();
   else {
     const hit = keys.find(p => p[0] === k);
     if (!hit) return;
@@ -419,6 +515,7 @@ addEventListener("keydown", e => {
 
 $("addKey").onclick = () => { keys.push(["", 1]); capturing = keys.length - 1; renderKeys(); };
 $("resetKeys").onclick = () => { keys = DEFAULT_KEYS.map(p => [...p]); capturing = -1; saveKeys(); };
+$("settings").addEventListener("close", () => { if (capturing >= 0) { stopCapture(); renderKeys(); } });
 v.addEventListener("ratechange", showRate);
 renderKeys();
 </script>
@@ -430,20 +527,25 @@ const VIDEO_EXT = /\.(mp4|m4v|mov|webm|mkv|ogv)$/i;
 let videoUrl = "";
 
 $("pick").addEventListener("change", () => {
+  const all = [...$("pick").files];
+  if (!all.length) return;                                // the picker was cancelled: keep the list
   const path = f => f.webkitRelativePath || f.name;
-  const files = [...$("pick").files].filter(f => f.type.startsWith("video/") || VIDEO_EXT.test(f.name))
+  const files = all.filter(f => f.type.startsWith("video/") || VIDEO_EXT.test(f.name))
     .sort((a, b) => path(a).localeCompare(path(b), undefined, { numeric: true }));
+  $("folder").textContent = $("folder").title = path(all[0]).split("/")[0];
+  $("folder").hidden = false;
   const list = $("list");
   list.textContent = "";
   for (const f of files) {
-    const b = Object.assign(document.createElement("button"), { textContent: path(f).replace(/^[^/]*\//, ""), title: path(f) });
+    const rel = path(f).replace(/^[^/]*\//, ""), cut = rel.lastIndexOf("/") + 1;   // the root folder is the heading
+    const b = Object.assign(document.createElement("button"), { title: rel });
+    b.append(Object.assign(document.createElement("span"), { className: "dir", textContent: rel.slice(0, cut) }), rel.slice(cut));
     b.onclick = () => play(f, b);
     const li = document.createElement("li");
     li.append(b);
     list.append(li);
   }
-  const root = path($("pick").files[0] || { name: "" }).split("/")[0];
-  $("count").textContent = files.length ? `${root}: ${files.length} video${files.length > 1 ? "s" : ""}` : "No videos in that folder.";
+  if (!files.length) list.innerHTML = '<li class="empty">No videos in this folder.</li>';
 });
 
 function play(f, b) {

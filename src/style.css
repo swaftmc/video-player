@@ -1,39 +1,77 @@
-:root { color-scheme: dark; font: 14px/1.4 system-ui, sans-serif; }
+:root { color-scheme: dark; --bg: #101114; --panel: #17181c; --line: #2a2c33; --text: #e4e5e9; --dim: #8b8e98;
+        --btn: #23252b; --btn-hover: #2d3038; --accent: #3b82f6; --accent-hover: #4b8ff7; --focus: #7aa7ff;
+        font: 14px/1.4 system-ui, sans-serif; }
 [hidden] { display: none !important; }
-body { margin: 0; height: 100vh; display: grid; grid-template-columns: 300px 1fr; background: #111; color: #ddd; }
-aside { overflow: auto; padding: 12px; border-right: 1px solid #333; }
-main { position: relative; min-width: 0; min-height: 0; background: #000; }
-video { display: block; width: 100%; height: 100%; object-fit: contain; outline: none; }
-h2 { margin: 20px 0 6px; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: #999; }
-p { margin: 6px 0; }
-.hint { color: #999; font-size: 12px; }
-kbd { padding: 0 4px; border: 1px solid #555; border-radius: 3px; font: 12px ui-monospace, monospace; }
+body { margin: 0; height: 100vh; overflow: hidden; display: grid; grid-template-columns: 260px 1fr;
+       background: var(--bg); color: var(--text); }
+svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2;
+      stroke-linecap: round; stroke-linejoin: round; }
+kbd { padding: 0 5px; border: 1px solid var(--line); border-radius: 4px; color: var(--dim);
+      font: 11px/16px ui-monospace, monospace; }
 
-button, .button { display: inline-block; padding: 4px 10px; border: 1px solid #555; border-radius: 4px;
-                  background: #2a2a2a; color: inherit; font: inherit; cursor: pointer; }
-button:hover, .button:hover { background: #333; }
-.button:focus-within, button:focus-visible { outline: 2px solid #6af; outline-offset: 1px; }
+/* sidebar: the buttons on top, the list taking the rest of the height, the switch and fullscreen at the bottom */
+aside { display: flex; flex-direction: column; min-height: 0; background: var(--panel); border-right: 1px solid var(--line); }
+.bar { display: flex; gap: 6px; padding: 12px; }
+.bar .primary { flex: 1; }
+#folder { margin: 0; padding: 0 14px 6px; overflow: hidden; color: var(--dim); font-size: 12px; font-weight: 600;
+          letter-spacing: .04em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+#list { flex: 1; min-height: 0; margin: 0; padding: 0 8px; overflow: auto; list-style: none; }
+#list button { display: block; width: 100%; padding: 7px 8px; overflow: hidden; border: 0; border-radius: 6px;
+               background: none; color: inherit; font: inherit; text-align: left; text-overflow: ellipsis;
+               white-space: nowrap; cursor: pointer; }
+#list button:hover { background: var(--btn); }
+#list button.on { background: var(--accent); color: #fff; }
+#list .dir { color: var(--dim); }
+#list button.on .dir { color: #ffffffb0; }
+#list .empty { padding: 7px 8px; color: var(--dim); }
+.foot { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-top: 1px solid var(--line); }
+#motionState { margin: 0; color: var(--dim); font-size: 12px; }
+
+/* buttons */
+.btn { display: inline-flex; gap: 8px; align-items: center; justify-content: center; height: 34px; padding: 0 12px;
+       box-sizing: border-box; border: 1px solid var(--line); border-radius: 8px; background: var(--btn);
+       color: inherit; font: inherit; cursor: pointer; user-select: none; transition: background .12s; }
+.btn:hover { background: var(--btn-hover); }
+.btn:active { transform: translateY(1px); }
+.btn.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+.btn.primary:hover { background: var(--accent-hover); }
+.btn.icon { width: 34px; padding: 0; }
+.btn kbd { margin-left: auto; }
+.btn:focus-visible, .btn:has(.vh:focus-visible), #list button:focus-visible, .switch input:focus-visible {
+  outline: 2px solid var(--focus); outline-offset: 2px; }
 .vh { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }   /* hidden but focusable */
 
-#list { margin: 6px 0 0; padding: 0; list-style: none; }
-#list button { display: block; width: 100%; padding: 4px 6px; border: 0; background: none; text-align: left;
-               overflow-wrap: anywhere; }
-#list button:hover { background: #222; }
-#list button.on { background: #2d4a7a; }
+.switch { display: flex; gap: 10px; align-items: center; cursor: pointer; user-select: none; }
+.switch kbd { margin-left: auto; }
+.switch input { appearance: none; flex: none; width: 36px; height: 20px; margin: 0; border-radius: 10px; cursor: pointer;
+                background: radial-gradient(circle at 10px 50%, #c9cbd1 6px, transparent 7px) #3a3d45;
+                transition: background-color .15s; }
+.switch input:checked { background: radial-gradient(circle at 26px 50%, #fff 6px, transparent 7px) var(--accent); }
 
-.switch { display: flex; gap: 8px; align-items: center; cursor: pointer; }
-.switch input { appearance: none; flex: none; width: 34px; height: 18px; margin: 0; border-radius: 9px; cursor: pointer;
-                background: radial-gradient(circle at 9px 50%, #ddd 6px, transparent 7px) #444; }
-.switch input:checked { background: radial-gradient(circle at 25px 50%, #fff 6px, transparent 7px) #3b7be0; }
-.switch input:focus-visible { outline: 2px solid #6af; outline-offset: 1px; }
-#motionState { min-height: 1.4em; color: #9bd; font-size: 12px; }
+/* the video; fullscreen is this area alone, so the messages over it still show */
+main { position: relative; min-width: 0; min-height: 0; background: #000; }
+video { display: block; width: 100%; height: 100%; object-fit: contain; outline: none; }
+video::-webkit-media-controls-fullscreen-button { display: none; }   /* controlslist only greys it out */
+#msg { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); padding: 7px 14px; border-radius: 8px;
+       background: #000000c0; color: #fff; pointer-events: none; }
 
+/* settings and help */
+dialog { width: min(420px, calc(100vw - 48px)); padding: 16px 18px 18px; border: 1px solid var(--line);
+         border-radius: 12px; background: var(--panel); color: var(--text); box-shadow: 0 20px 60px #0008; }
+dialog::backdrop { background: #0009; }
+dialog .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+dialog h2 { margin: 0; font-size: 16px; }
+.hint { margin: 8px 0; color: var(--dim); font-size: 12px; }
+.row { display: flex; gap: 8px; margin: 12px 0 0; }
 #keys { border-collapse: collapse; }
-#keys td { padding: 2px 4px 2px 0; }
-#keys .key { min-width: 44px; }
-#keys tr.on .key { background: #3b7be0; border-color: #3b7be0; }
-#keys input { width: 64px; margin-right: 2px; }
-#keys .x { padding: 2px 6px; border-color: transparent; background: none; color: #999; }
-
-#msg { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); padding: 6px 12px; border-radius: 6px;
-       background: #000c; pointer-events: none; }
+#keys td { padding: 3px 6px 3px 0; color: var(--dim); }
+#keys .key { min-width: 64px; color: var(--text); }
+#keys tr.on .key { border-color: var(--accent); background: var(--accent); color: #fff; }
+#keys input { width: 72px; height: 34px; box-sizing: border-box; margin-right: 4px; padding: 0 8px; border: 1px solid var(--line);
+              border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
+#keys input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+#keys .x { border-color: transparent; background: none; color: var(--dim); }
+#keys .x:hover { background: var(--btn); color: var(--text); }
+.keylist { border-collapse: collapse; width: 100%; }
+.keylist td { padding: 5px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.keylist td:first-child { width: 72px; color: var(--dim); }
