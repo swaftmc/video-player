@@ -2,16 +2,20 @@
 "use strict";
 
 const DEFAULT_KEYS = [["1", 0.25], ["2", 0.5], ["3", 1], ["4", 2], ["5", 3]];
-const FIXED = { z: "motion zoom", 0: "reset zoom", f: "fullscreen", "?": "the keys list", " ": "play / pause" };
+const FIXED = { z: "motion zoom", 0: "reset zoom", f: "fullscreen", "?": "the keys list", " ": "play / pause",
+                a: "5 seconds back", d: "5 seconds forward" };
 const MIN_RATE = 0.0625, MAX_RATE = 16;   // the playbackRate range Chromium accepts
 const KEYS_SAVE = "video-viewer.keys";
 let keys = loadKeys(), capturing = -1;
 
-function loadKeys() {     // the saved pairs, or the defaults if there are none or they don't make sense
+function loadKeys() {     // the saved pairs that make sense (a key that became fixed in a later version is dropped), or the defaults
   try {
     const k = JSON.parse(localStorage.getItem(KEYS_SAVE));
-    if (Array.isArray(k) && k.every(p => Array.isArray(p) && typeof p[0] === "string" && p[0].length === 1 &&
-        !(p[0] in FIXED) && Number.isFinite(p[1]) && p[1] >= MIN_RATE && p[1] <= MAX_RATE)) return k;
+    if (Array.isArray(k)) {
+      const ok = k.filter(p => Array.isArray(p) && typeof p[0] === "string" && p[0].length === 1 &&
+        !(p[0] in FIXED) && Number.isFinite(p[1]) && p[1] >= MIN_RATE && p[1] <= MAX_RATE);
+      if (ok.length || !k.length) return ok;     // an empty saved list is the user's own choice: no speed keys
+    }
   } catch (_) { /* unreadable: the defaults */ }
   return DEFAULT_KEYS.map(p => [...p]);
 }
@@ -79,6 +83,10 @@ addEventListener("keydown", e => {
   else if (k === "0") { motionOn ? setMotion(false) : resetZoom(); say("zoom reset"); }
   else if (k === "f") toggleFullscreen();
   else if (k === "?") $("help").showModal();
+  else if (k === "arrowleft" || k === "arrowright") {
+    if (e.target === $("sash")) return;     // there the arrows resize the sidebar
+    step(k === "arrowright" ? 1 : -1);
+  } else if (k === "a" || k === "d") skip(k === "d" ? 1 : -1);
   else {
     const hit = keys.find(p => p[0] === k);
     if (!hit) return;

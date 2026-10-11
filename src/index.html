@@ -43,7 +43,7 @@
        aria-valuemax="480" aria-valuenow="260" tabindex="0" title="Drag to resize the sidebar; double-click to reset"></div>
 </aside>
 <main id="stage">
-  <video id="v" controls tabindex="0"></video>
+  <video id="v" controls tabindex="0" poster="placeholder.jpeg"></video>
   <div id="msg" aria-live="polite" hidden></div>
 </main>
 
@@ -70,6 +70,8 @@
     <tr><td>wheel</td><td>zoom at the cursor (motion zoom on: tighter / looser)</td></tr>
     <tr><td><kbd>0</kbd></td><td>reset the zoom</td></tr>
     <tr><td><kbd>F</kbd></td><td>fullscreen. The player's own button and double-click work too, but there the speed and zoom messages don't show.</td></tr>
+    <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>one frame back / forward (pauses)</td></tr>
+    <tr><td><kbd>A</kbd> <kbd>D</kbd></td><td>5 seconds back / forward</td></tr>
     <tr><td><kbd>Space</kbd></td><td>play / pause</td></tr>
     <tr><td><kbd>?</kbd></td><td>this list</td></tr>
   </table>
@@ -81,6 +83,8 @@
 <script src="motion.js"></script>
 <script src="zoom.js"></script>
 <script src="flow.js"></script>
+<script src="frames.js"></script>
+<script src="step.js"></script>
 <script src="keys.js"></script>
 <script src="library.js"></script>
 </body>

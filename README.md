@@ -18,6 +18,9 @@ open it in Edge or Chrome from anywhere (a double-click works; no server).
 - Light and dark themes: Settings (the sliders button) has Auto (follows Windows / the browser), Light and Dark.
 - The sidebar's edge drags to make it wider or narrower (240–480 px), like VS Code's panels. Double-click the edge to
   reset it; with the edge focused (Tab), the arrow keys move it too. The theme and the width are remembered.
+- Frame by frame: ← and → step one frame back and forward (and pause); hold the key to scrub. A and D skip 5 seconds
+  back and forward. The frame length is measured from the frames shown while the video plays.
+- Until a video plays, the video area shows a picture (`src/placeholder.jpeg`, built into the page).
 
 ## Use
 
@@ -28,6 +31,8 @@ open it in Edge or Chrome from anywhere (a double-click works; no server).
 | wheel | zoom in / out (motion zoom on: tighter / looser) |
 | 0 | reset the zoom (and turn motion zoom off) |
 | F | fullscreen on / off (also leaves the player's own fullscreen) |
+| ← → | one frame back / forward (pauses; hold to scrub) |
+| A D | 5 seconds back / forward |
 | Space | play / pause |
 | ? | the keys list |
 
@@ -55,6 +60,7 @@ The page is written as separate files in `src/`; `build.mjs` inlines them into `
 
 ```powershell
 node check_motion.mjs   # self-check of the motion box maths
+node check_step.mjs     # self-check of the frame-step maths
 node build.mjs          # src/ -> index.html
 ```
 
@@ -66,6 +72,8 @@ Layout:
 - `src/motion.js`: flow field → box round the main motion, and the zoomed view that frames it
 - `src/zoom.js`: zoom by cropping the video (`object-view-box`), the wheel, easing to the motion
 - `src/flow.js`: onnxruntime-web, the model file (kept in IndexedDB), grabbing frame pairs, running the model
+- `src/frames.js`: frame length and where a step lands (pure maths)
+- `src/step.js`: measuring the frame length, the frame steps and the 5 second skips
 - `src/keys.js`: the speed keys, their table in the Settings dialog and the keyboard
 - `src/library.js`: the folder, the misc/ files and the video list
 
@@ -80,6 +88,9 @@ Layout:
 - In the player's own fullscreen (its button or double-click), the speed and zoom messages don't show. Edge won't let
   the page swap it for its own fullscreen without a fresh click.
 - After pressing Tab into the player's controls, the keys go to those controls until you click the video.
+- Frame steps use one frame length per video. Constant-rate clips step exactly; a variable-frame-rate clip (some
+  phone videos) can be off by a frame in places.
+- A step before the video has played at all plays a few frames muted to measure the frame length, then stops.
 
 ## Licence
 
@@ -88,3 +99,6 @@ use, ask first: open an issue at [swaftmc/video-player](https://github.com/swaft
 
 Not included here, and under their own licences: the NeuFlowV2 model (Apache-2.0) and onnxruntime-web (MIT), which
 the page loads when motion zoom is used.
+
+The picture shown before a video plays (`src/placeholder.jpeg`) is a photo found online. Its photographer is unknown,
+and it is not covered by this licence. If it is yours and you want it removed, open an issue.
